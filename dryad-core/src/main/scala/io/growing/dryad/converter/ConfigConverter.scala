@@ -5,6 +5,7 @@ import java.util.Properties
 
 import com.google.common.base.Charsets
 import com.typesafe.config.{Config, ConfigFactory}
+import org.yaml.snakeyaml.Yaml
 
 /**
  * Component:
@@ -37,6 +38,12 @@ object ConfigConverters {
   val conf = new ConfigConverter[Config] {
     override def convert(payload: String): Config = {
       ConfigFactory.parseString(payload)
+    }
+  }
+
+  val yaml = new ConfigConverter[Map[String, String]] {
+    override def convert(payload: String): Map[String, String] = {
+      new Yaml().loadAs(payload, classOf[Map[String, String]])
     }
   }
 

@@ -76,7 +76,8 @@ class ConfigGarageImpl(configService: ConfigService) extends ConfigGarage with O
     val converter = extension(name) match {
       case "conf"       ⇒ ConfigConverters.conf
       case "properties" ⇒ ConfigConverters.properties
-      case _            ⇒ ConfigConverters.properties
+      case "yaml"       ⇒ ConfigConverters.yaml
+      case extension    ⇒ throw new UnsupportedOperationException(s"Unsupported config extension $extension")
     }
     val source = converter.convert(config.payload)
     val reader = ConfigReader(source)

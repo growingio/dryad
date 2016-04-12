@@ -6,12 +6,12 @@ import com.google.common.base.Charsets
 import io.growing.dryad.internal.Configuration
 
 /**
-  * Component:
-  * Description:
-  * Date: 16/3/28
-  *
-  * @author Andy Ai
-  */
+ * Component:
+ * Description:
+ * Date: 16/3/28
+ *
+ * @author Andy Ai
+ */
 trait ConfigSnapshot {
 
   def flash(configuration: Configuration): Unit
