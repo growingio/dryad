@@ -1,7 +1,6 @@
 package io.growing.dryad.watcher
 
-import io.growing.dryad.inject.EnvironmentInjector
-import io.growing.dryad.internal.Configuration
+import io.growing.dryad.internal.ConfigurationDesc
 import rx.subjects.PublishSubject
 
 /**
@@ -11,10 +10,10 @@ import rx.subjects.PublishSubject
  *
  * @author Andy Ai
  */
-trait ConfigWatcher extends EnvironmentInjector {
+trait ConfigWatcher {
   def watch(name: String): Unit
 
   def unwatch(name: String): Unit
 
-  def awareSubject(subject: PublishSubject[Configuration]): Unit
+  def awareSubject(subject: PublishSubject[ConfigurationDesc]): Unit
 }

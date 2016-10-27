@@ -1,6 +1,6 @@
 package io.growing.dryad.parser
 
-import io.growing.dryad.reader.ConfigReader
+import com.typesafe.config.Config
 
 /**
  * Component:
@@ -11,6 +11,6 @@ import io.growing.dryad.reader.ConfigReader
  */
 trait ConfigParser[T] {
 
-  def parse(clazz: Class[T], reader: ConfigReader): T
+  def parse(config: Config): T
 
 }

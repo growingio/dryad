@@ -1,10 +1,24 @@
 package io.growing.dryad.provider
 
-import com.google.common.base.Charsets
+import java.math.BigInteger
+import java.util
+import java.util.concurrent.Callable
+import java.util.concurrent.atomic.AtomicReference
+import java.util.{List ⇒ JList}
+
+import com.google.common.base.{Charsets, Optional}
+import com.google.common.cache.CacheBuilder
 import com.google.common.io.BaseEncoding
+import com.orbitz.consul.async.ConsulResponseCallback
+import com.orbitz.consul.model.ConsulResponse
+import com.orbitz.consul.model.kv.Value
+import com.orbitz.consul.option.QueryOptions
+import io.growing.dryad.client.ConsulClient
 import io.growing.dryad.exception.ConfigurationNotFoundException
-import io.growing.dryad.internal.{Configuration, ConfigurationValue}
-import io.growing.dryad.{ConsulClient, Environment}
+import io.growing.dryad.internal.ConfigurationDesc
+import io.growing.dryad.watcher.ConfigChangeListener
+
+import scala.collection.JavaConversions._
 
 /**
  * Component:
@@ -14,21 +28,59 @@ import io.growing.dryad.{ConsulClient, Environment}
  * @author Andy Ai
  */
 class ConsulConfigProvider extends ConfigProvider {
-  private[this] var environment: Environment = _
+  private[this] val BLOCK_QUERY_MINS = 5
+  private[this] val watchers = CacheBuilder.newBuilder().build[String, Watcher]()
+  private[this] val listeners = CacheBuilder.newBuilder().build[String, JList[ConfigChangeListener]]()
 
-  override def config(environment: Environment): Unit = {
-    this.environment = environment
-  }
-
-  override def load(name: String): Configuration = {
-    val path = ConsulClient.path(environment, name)
-    val config = ConsulClient.client(environment).getValue(path)
+  override def load(name: String, namespace: String, group: String, listener: ConfigChangeListener): ConfigurationDesc = {
+    val path = ConsulClient.path(namespace, group, name)
+    val config = ConsulClient.client(namespace, group).getValue(path)
     if (!config.isPresent) {
       throw new ConfigurationNotFoundException(path)
     }
     val version = config.get().getModifyIndex
     val payload = new String(BaseEncoding.base64().decode(config.get().getValue.get()), Charsets.UTF_8)
-    ConfigurationValue(name, payload, version, environment.namespace, environment.group)
+    addListener(namespace, group, name, listener)
+    ConfigurationDesc(name, payload, version, namespace, group)
+  }
+
+  private[this] def addListener(namespace: String, group: String, name: String, listener: ConfigChangeListener): Unit = {
+    listeners.get(name, new Callable[JList[ConfigChangeListener]] {
+      override def call(): JList[ConfigChangeListener] = new util.ArrayList[ConfigChangeListener]()
+    }).add(listener)
+    watchers.get(name, new Callable[Watcher] {
+      override def call(): Watcher = new Watcher(namespace, group, name)
+    })
+  }
+
+  private[this] class Watcher(namespace: String, group: String, name: String) {
+    private[this] val path = ConsulClient.path(namespace, group, name)
+    private[this] val kvClient = ConsulClient.client(namespace, group)
+    private[this] val callback: ConsulResponseCallback[Optional[Value]] = new ConsulResponseCallback[Optional[Value]]() {
+      private[this] val index = new AtomicReference[BigInteger]
+
+      override def onComplete(consulResponse: ConsulResponse[Optional[Value]]): Unit = {
+        if (consulResponse.getResponse.isPresent) {
+          val value = consulResponse.getResponse.get()
+          val payload = new String(BaseEncoding.base64().decode(value.getValue.get()), Charsets.UTF_8)
+          val configuration = ConfigurationDesc(name, payload, value.getModifyIndex, namespace, group)
+          listeners.getIfPresent(name).foreach { listener ⇒
+            listener.onChange(configuration)
+          }
+        }
+        index.set(consulResponse.getIndex)
+        watch()
+      }
+
+      override def onFailure(throwable: Throwable): Unit = {
+        watch()
+      }
+
+      private def watch(): Unit = {
+        kvClient.getValue(path, QueryOptions.blockMinutes(BLOCK_QUERY_MINS, index.get()).build(), this)
+      }
+    }
+    kvClient.getValue(name, QueryOptions.blockMinutes(BLOCK_QUERY_MINS, new BigInteger("0")).build(), callback)
   }
 
 }

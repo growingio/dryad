@@ -1,9 +1,10 @@
 package io.growing.dryad
 
 import com.typesafe.config.{Config, ConfigFactory}
-import io.growing.dryad.internal.impl.{ConfigGarageImpl, ConfigServiceImpl}
+import io.growing.dryad.internal.ConfigService
 import io.growing.dryad.provider.ConfigProvider
-import io.growing.dryad.watcher.ConfigWatcher
+
+import scala.reflect.ClassTag
 
 /**
  * Component:
@@ -14,44 +15,39 @@ import io.growing.dryad.watcher.ConfigWatcher
  */
 trait ConfigSystem {
 
-  def get[T](clazz: Class[T]): T
+  def get[T: ClassTag]: T
 
-  def environment(): Environment
+  def configuration: Config
 
-}
+  def group: String
 
-private[this] class ConfigSystemImpl(config: Config) extends ConfigSystem {
-  private[this] val _environment = Environment(
-    config.getString("dryad.host"),
-    config.getInt("dryad.port"),
-    config.getString("dryad.namesapce"),
-    config.getString("dryad.group")
-  )
-  private[this] val configWatcher = {
-    val cw = Class.forName(config.getString("dryad.watcher")).newInstance().asInstanceOf[ConfigWatcher]
-    cw.config(_environment)
-    cw
-  }
-  private[this] val configProvider = {
-    val cp = Class.forName(config.getString("dryad.provider")).newInstance().asInstanceOf[ConfigProvider]
-    cp.config(_environment)
-    cp
-  }
-  private[this] val configService = new ConfigServiceImpl(configWatcher, configProvider)
-  private[this] val configGarage = new ConfigGarageImpl(configService)
-
-  override def get[T](clazz: Class[T]): T = {
-    configGarage.get(clazz)
-  }
-
-  def environment(): Environment = _environment
+  def namespace: String
 
 }
 
 object ConfigSystem {
 
+  def apply(): ConfigSystem = new ConfigSystemImpl(ConfigFactory.load())
+
   def apply(config: Config): ConfigSystem = new ConfigSystemImpl(config)
 
-  def apply(): ConfigSystem = new ConfigSystemImpl(ConfigFactory.load("application.conf"))
-
 }
+
+private[this] class ConfigSystemImpl(config: Config) extends ConfigSystem {
+  private[this] val _group: String = config.getString("dryad.group")
+  private[this] val _namespace: String = config.getString("dryad.namespace")
+  private[this] val provider: ConfigProvider = {
+    val name = config.getString("dryad.provider")
+    Class.forName(name).newInstance().asInstanceOf[ConfigProvider]
+  }
+  private[this] val configServer: ConfigService = ConfigService(provider)
+
+  override def group: String = _group
+
+  override def namespace: String = _namespace
+
+  override def configuration: Config = config
+
+  override def get[T: ClassTag]: T = configServer.get[T](_namespace, _group)
+}
+

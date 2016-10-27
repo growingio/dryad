@@ -1,7 +1,7 @@
 package io.growing.dryad.provider
 
-import io.growing.dryad.inject.EnvironmentInjector
-import io.growing.dryad.internal.Configuration
+import io.growing.dryad.internal.ConfigurationDesc
+import io.growing.dryad.watcher.ConfigChangeListener
 
 /**
  * Component:
@@ -10,8 +10,8 @@ import io.growing.dryad.internal.Configuration
  *
  * @author Andy Ai
  */
-trait ConfigProvider extends EnvironmentInjector {
+trait ConfigProvider {
 
-  def load(name: String): Configuration
+  def load(name: String, namespace: String, group: String, listener: ConfigChangeListener): ConfigurationDesc
 
 }

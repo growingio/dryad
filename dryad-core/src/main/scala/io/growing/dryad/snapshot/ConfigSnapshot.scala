@@ -3,7 +3,7 @@ package io.growing.dryad.snapshot
 import java.nio.file.{FileSystems, Files, Paths, StandardOpenOption}
 
 import com.google.common.base.Charsets
-import io.growing.dryad.internal.Configuration
+import io.growing.dryad.internal.ConfigurationDesc
 
 /**
  * Component:
@@ -14,7 +14,7 @@ import io.growing.dryad.internal.Configuration
  */
 trait ConfigSnapshot {
 
-  def flash(configuration: Configuration): Unit
+  def flash(configuration: ConfigurationDesc): Unit
 
 }
 
@@ -29,7 +29,7 @@ object LocalFileConfigSnapshot extends ConfigSnapshot {
     name
   }
 
-  override def flash(configuration: Configuration): Unit = {
+  override def flash(configuration: ConfigurationDesc): Unit = {
     val dir = Paths.get(Array(workshop, configuration.namespace, configuration.group).filter(_.trim.nonEmpty).mkString(separator))
     if (!Files.exists(dir)) {
       Files.createDirectories(dir)

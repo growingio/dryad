@@ -1,6 +1,9 @@
 package io.growing.dryad.internal
 
-import rx.subjects.PublishSubject
+import io.growing.dryad.internal.impl.ConfigServiceImpl
+import io.growing.dryad.provider.ConfigProvider
+
+import scala.reflect.ClassTag
 
 /**
  * Component:
@@ -11,8 +14,12 @@ import rx.subjects.PublishSubject
  */
 trait ConfigService {
 
-  def get(name: String): Configuration
+  def get[T: ClassTag](namespace: String, group: String): T
 
-  def subject(): PublishSubject[Configuration]
+}
+
+object ConfigService {
+
+  def apply(provider: ConfigProvider): ConfigService = new ConfigServiceImpl(provider)
 
 }

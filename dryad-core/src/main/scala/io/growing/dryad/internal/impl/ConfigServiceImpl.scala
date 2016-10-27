@@ -1,17 +1,19 @@
 package io.growing.dryad.internal.impl
 
-import java.util.concurrent.TimeUnit
+import java.lang.reflect.Method
+import java.util.concurrent.Callable
+import java.util.concurrent.atomic.AtomicReference
 
-import com.google.common.cache.{CacheBuilder, CacheLoader}
-import io.growing.dryad.exception.ConfigurationNotFoundException
-import io.growing.dryad.internal.{ConfigService, Configuration, ConfigurationReference}
+import com.google.common.cache.CacheBuilder
+import com.typesafe.config.ConfigFactory
+import io.growing.dryad.annotation.Configuration
+import io.growing.dryad.internal.{ConfigService, ConfigurationDesc}
 import io.growing.dryad.provider.ConfigProvider
 import io.growing.dryad.snapshot.LocalFileConfigSnapshot
-import io.growing.dryad.watcher.ConfigWatcher
-import rx.lang.scala.Observer
-import rx.subjects.PublishSubject
+import io.growing.dryad.watcher.ConfigChangeListener
+import net.sf.cglib.proxy.{Enhancer, MethodInterceptor, MethodProxy}
 
-import scala.util.{Failure, Success, Try}
+import scala.reflect.ClassTag
 
 /**
  * Component:
@@ -20,52 +22,62 @@ import scala.util.{Failure, Success, Try}
  *
  * @author Andy Ai
  */
-class ConfigServiceImpl(
-  configWatcher:  ConfigWatcher,
-  configProvider: ConfigProvider
-) extends ConfigService with Observer[Configuration] {
+class ConfigServiceImpl(provider: ConfigProvider) extends ConfigService {
 
-  private[this] val MAX_CONFIG_CACHE_SIZE = 5000
-  private[this] val configLoader = new CacheLoader[String, ConfigurationReference] {
-    override def load(key: String): ConfigurationReference = {
-      new ConfigurationReference(loadConfiguration(key))
-    }
-  }
-  private[this] val configsCache = CacheBuilder.newBuilder()
-    .softValues()
-    .expireAfterAccess(60, TimeUnit.MINUTES)
-    .maximumSize(MAX_CONFIG_CACHE_SIZE)
-    .build(configLoader)
-  private[this] val _subject = {
-    val _subject = rx.lang.scala.subjects.PublishSubject[Configuration]()
-    _subject.subscribe(this)
-    _subject
-  }
-  configWatcher.awareSubject(_subject.asJavaSubject)
+  private[this] val caches = CacheBuilder.newBuilder().build[String, AnyRef]()
 
-  override def get(name: String): Configuration = {
-    Try(configsCache.get(name)) match {
-      case Success(configuration) ⇒ configuration
-      case Failure(e)             ⇒ throw new ConfigurationNotFoundException(name)
-    }
+  override def get[T: ClassTag](namespace: String, group: String): T = {
+    val clazz = implicitly[ClassTag[T]].runtimeClass
+    caches.get(clazz.getName, new Callable[AnyRef] {
+      override def call(): AnyRef = createRef(clazz, namespace, group)
+    }).asInstanceOf[T]
   }
 
-  override def subject(): PublishSubject[Configuration] = _subject.asJavaSubject
+  private[this] def createRef(clazz: Class[_], namespace: String, group: String): AnyRef = {
+    val annotation = clazz.getAnnotation(classOf[Configuration])
+    val ref: Ref = new Ref(new AtomicReference[Any]())
+    val parser = annotation.parser().newInstance()
+    val configuration = provider.load(annotation.name(), namespace, group, new ConfigChangeListener {
 
-  override def onNext(value: Configuration): Unit = {
-    Try(configsCache.get(value.name)) match {
-      case Success(configuration) ⇒
-        if (configuration.version < value.version) {
-          configuration.set(loadConfiguration(value.name))
-        }
-      case Failure(e) ⇒ throw new ConfigurationNotFoundException(value.name)
-    }
-  }
+      override def onChange(configuration: ConfigurationDesc): Unit = {
+        val config = ConfigFactory.parseString(configuration.payload)
+        ref.reference.set(parser.parse(config))
+        LocalFileConfigSnapshot.flash(configuration)
+      }
 
-  private[this] def loadConfiguration(name: String): Configuration = {
-    val configuration = configProvider.load(name)
+    })
     LocalFileConfigSnapshot.flash(configuration)
-    configWatcher.watch(name)
-    configuration
+    val config = ConfigFactory.parseString(configuration.payload)
+    ref.reference.set(parser.parse(config))
+
+    val enhancer = new Enhancer()
+    enhancer.setSuperclass(clazz)
+    enhancer.setCallbackType(classOf[Ref])
+    enhancer.setCallback(ref)
+    val parameterTypes: Array[Class[_]] = clazz.getConstructors.head.getParameterTypes
+    val refObj = enhancer.create(parameterTypes, parameterTypes.map { c ⇒
+      val v = c.getName match {
+        case "byte"    ⇒ 0
+        case "short"   ⇒ 0
+        case "int"     ⇒ 0
+        case "long"    ⇒ 0L
+        case "float"   ⇒ 0.0f
+        case "double"  ⇒ 0.0d
+        case "char"    ⇒ '\u0000'
+        case "boolean" ⇒ false
+        case _         ⇒ null
+      }
+      v.asInstanceOf[AnyRef]
+    })
+    refObj
   }
+
+}
+
+private[impl] class Ref(val reference: AtomicReference[Any]) extends MethodInterceptor {
+
+  override def intercept(o: scala.Any, method: Method, objects: Array[AnyRef], methodProxy: MethodProxy): AnyRef = {
+    method.invoke(reference.get())
+  }
+
 }
