@@ -10,9 +10,7 @@ object Dependencies {
     val config = "1.3.0"
     val consul = "0.13.2"
     val configs = "0.4.4"
-    val rxScala = "0.26.0"
     val logging = "3.1.0"
-    val snakeYAML = "1.17"
     val scalaTest = "2.2.6"
   }
 
@@ -20,8 +18,6 @@ object Dependencies {
     val cglib = "cglib" % "cglib-nodep" % Versions.cglib
     val config = "com.typesafe" % "config" % Versions.config
     val guava = "com.google.guava" % "guava" % Versions.guava
-    val rxScala = "io.reactivex" %% "rxscala" % Versions.rxScala
-    val snakeYAML = "org.yaml" % "snakeyaml" % Versions.snakeYAML
     val configs = "com.github.kxbmap" %% "configs" % Versions.configs
     val consul = "com.orbitz.consul" % "consul-client" % Versions.consul
     val logging = "com.typesafe.scala-logging" %% "scala-logging" % Versions.logging
@@ -35,7 +31,7 @@ object Dependencies {
 
   import Dependencies.Compile._
 
-  val dryadCore: Seq[ModuleID] = Seq(configs, cglib, logging, config, snakeYAML, guava, rxScala, Test.scalaTest)
+  val dryadCore: Seq[ModuleID] = Seq(configs, cglib, logging, config, guava, Test.scalaTest)
 
   val dryadConsul: Seq[ModuleID] = Seq(jerseyClient, jerseyConnector, consul, Test.scalaTest)
 }
