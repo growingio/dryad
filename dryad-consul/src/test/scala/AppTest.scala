@@ -44,7 +44,6 @@ import org.scalatest._
     ConsulClient.client(namespace, group).deleteKey(ConsulClient.path(namespace, group, "application.conf"))
   }
 
-
   test("Consul client2") {
     val configSystem = ConfigSystem()
     val group = configSystem.group

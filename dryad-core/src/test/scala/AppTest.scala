@@ -20,7 +20,8 @@ class AppTest extends FunSuite {
           group: prod
           provider: MemoryProvider
         }
-      """.stripMargin)
+      """.stripMargin
+    )
     val configSystem = ConfigSystem(dryadConfig)
     val started = System.currentTimeMillis()
     val devConfig = configSystem.get[DevConfig]
@@ -42,17 +43,17 @@ class AppTest extends FunSuite {
     val ref: Ref = new Ref(reference)
     enhancer.setCallback(ref)
     val parameterTypes: Array[Class[_]] = clazz.getConstructors.head.getParameterTypes
-    val obj = enhancer.create(parameterTypes, parameterTypes.map { c =>
+    val obj = enhancer.create(parameterTypes, parameterTypes.map { c ⇒
       val x = c.getName match {
-        case "byte" => 0
-        case "short" => 0
-        case "int" => 0
-        case "long" => 0L
-        case "float" => 0.0f
-        case "double" => 0.0d
-        case "char" => '\u0000'
-        case "boolean" => false
-        case _ => null
+        case "byte"    ⇒ 0
+        case "short"   ⇒ 0
+        case "int"     ⇒ 0
+        case "long"    ⇒ 0L
+        case "float"   ⇒ 0.0f
+        case "double"  ⇒ 0.0d
+        case "char"    ⇒ '\u0000'
+        case "boolean" ⇒ false
+        case _         ⇒ null
       }
       x.asInstanceOf[AnyRef]
     })
@@ -70,26 +71,30 @@ class MemoryProvider extends ConfigProvider {
       override def run(): Unit = {
         Thread.sleep(2000)
         listener.onChange(
-          ConfigurationDesc(name,
+          ConfigurationDesc(
+            name,
             """
               age: 18
               name: Andy
               addr: {
                 city: Beijing
               }
-            """.stripMargin, 1, namespace, group)
+            """.stripMargin, 1, namespace, group
+          )
         )
       }
     }
     thread.start()
-    ConfigurationDesc(name,
+    ConfigurationDesc(
+      name,
       """
         age: 18
         name: Andy
         addr: {
           city: Shanghai
         }
-      """.stripMargin, 0, namespace, group)
+      """.stripMargin, 0, namespace, group
+    )
   }
 
 }
