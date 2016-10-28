@@ -1,5 +1,6 @@
 package io.growing.dryad.internal
 
+import com.typesafe.config.Config
 import io.growing.dryad.internal.impl.ConfigServiceImpl
 import io.growing.dryad.provider.ConfigProvider
 
@@ -15,6 +16,8 @@ import scala.reflect.ClassTag
 trait ConfigService {
 
   def get[T: ClassTag](namespace: String, group: String): T
+
+  def get(namespace: String, group: String, name: String): Config
 
 }
 

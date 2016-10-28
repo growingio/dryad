@@ -1,17 +1,16 @@
 package io.growing.dryad.internal.impl
 
-import java.lang.reflect.Method
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicReference
 
 import com.google.common.cache.CacheBuilder
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory, ConfigRef}
 import io.growing.dryad.annotation.Configuration
 import io.growing.dryad.internal.{ConfigService, ConfigurationDesc}
 import io.growing.dryad.provider.ConfigProvider
 import io.growing.dryad.snapshot.LocalFileConfigSnapshot
 import io.growing.dryad.watcher.ConfigChangeListener
-import net.sf.cglib.proxy.{Enhancer, MethodInterceptor, MethodProxy}
+import net.sf.cglib.proxy.Enhancer
 
 import scala.reflect.ClassTag
 
@@ -24,18 +23,37 @@ import scala.reflect.ClassTag
  */
 class ConfigServiceImpl(provider: ConfigProvider) extends ConfigService {
 
-  private[this] val caches = CacheBuilder.newBuilder().build[String, AnyRef]()
+  private[this] val objects = CacheBuilder.newBuilder().build[String, AnyRef]()
+  private[this] val configs = CacheBuilder.newBuilder().build[String, Config]()
 
   override def get[T: ClassTag](namespace: String, group: String): T = {
     val clazz = implicitly[ClassTag[T]].runtimeClass
-    caches.get(clazz.getName, new Callable[AnyRef] {
-      override def call(): AnyRef = createRef(clazz, namespace, group)
+    objects.get(clazz.getName, new Callable[AnyRef] {
+      override def call(): AnyRef = createObjectRef(clazz, namespace, group)
     }).asInstanceOf[T]
   }
 
-  private[this] def createRef(clazz: Class[_], namespace: String, group: String): AnyRef = {
+  override def get(namespace: String, group: String, name: String): Config = {
+    configs.get(name, new Callable[Config] {
+      override def call(): Config = {
+        val underlying: AtomicReference[Config] = new AtomicReference[Config]()
+        val c = provider.load(name, namespace, group, new ConfigChangeListener {
+          override def onChange(configuration: ConfigurationDesc): Unit = {
+            val config = ConfigFactory.parseString(configuration.payload)
+            underlying.set(config)
+            LocalFileConfigSnapshot.flash(configuration)
+          }
+        })
+        LocalFileConfigSnapshot.flash(c)
+        underlying.set(ConfigFactory.parseString(c.payload))
+        new ConfigRef(underlying)
+      }
+    })
+  }
+
+  private[this] def createObjectRef(clazz: Class[_], namespace: String, group: String): AnyRef = {
     val annotation = clazz.getAnnotation(classOf[Configuration])
-    val ref: Ref = new Ref(new AtomicReference[Any]())
+    val ref: ObjectRef = new ObjectRef(new AtomicReference[Any]())
     val parser = annotation.parser().newInstance()
     val configuration = provider.load(annotation.name(), namespace, group, new ConfigChangeListener {
 
@@ -52,7 +70,7 @@ class ConfigServiceImpl(provider: ConfigProvider) extends ConfigService {
 
     val enhancer = new Enhancer()
     enhancer.setSuperclass(clazz)
-    enhancer.setCallbackType(classOf[Ref])
+    enhancer.setCallbackType(classOf[ObjectRef])
     enhancer.setCallback(ref)
     val parameterTypes: Array[Class[_]] = clazz.getConstructors.head.getParameterTypes
     val refObj = enhancer.create(parameterTypes, parameterTypes.map { c ⇒
@@ -74,10 +92,3 @@ class ConfigServiceImpl(provider: ConfigProvider) extends ConfigService {
 
 }
 
-private[impl] class Ref(val reference: AtomicReference[Any]) extends MethodInterceptor {
-
-  override def intercept(o: scala.Any, method: Method, objects: Array[AnyRef], methodProxy: MethodProxy): AnyRef = {
-    method.invoke(reference.get())
-  }
-
-}

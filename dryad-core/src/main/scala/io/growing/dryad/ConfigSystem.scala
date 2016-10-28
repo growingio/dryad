@@ -15,13 +15,15 @@ import scala.reflect.ClassTag
  */
 trait ConfigSystem {
 
-  def get[T: ClassTag]: T
-
-  def configuration: Config
-
   def group: String
 
   def namespace: String
+
+  def configuration: Config
+
+  def get[T: ClassTag]: T
+
+  def get(name: String): Config
 
 }
 
@@ -49,5 +51,8 @@ private[this] class ConfigSystemImpl(config: Config) extends ConfigSystem {
   override def configuration: Config = config
 
   override def get[T: ClassTag]: T = configServer.get[T](_namespace, _group)
+
+  override def get(name: String): Config = configServer.get(_namespace, _group, name)
+
 }
 
