@@ -26,6 +26,7 @@ object ConsulClient {
       override def call(): KeyValueClient = {
         Consul.builder()
           .withHostAndPort(HostAndPort.fromParts(host, port))
+          .withConnectTimeoutMillis(1000)
           .build().keyValueClient()
       }
     })
