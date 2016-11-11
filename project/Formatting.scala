@@ -4,16 +4,15 @@ import sbt._
 
 import scalariform.formatter.preferences.FormattingPreferences
 
-object Formatting {
-  lazy val formatSettings = SbtScalariform.scalariformSettings ++ Seq(
-    ScalariformKeys.preferences in Compile := formattingPreferences,
-    ScalariformKeys.preferences in Test := formattingPreferences
-  )
+object Formatting extends AutoPlugin {
 
-  lazy val docFormatSettings = SbtScalariform.scalariformSettings ++ Seq(
-    ScalariformKeys.preferences in Compile := docFormattingPreferences,
-    ScalariformKeys.preferences in Test := docFormattingPreferences
-  )
+  override def trigger: PluginTrigger = allRequirements
+
+  override def projectSettings: Seq[_root_.sbt.Def.Setting[_]] =
+    SbtScalariform.scalariformSettings ++ Seq(
+      ScalariformKeys.preferences in Compile := formattingPreferences,
+      ScalariformKeys.preferences in Test := formattingPreferences
+    )
 
   def formattingPreferences: FormattingPreferences = {
     import scalariform.formatter.preferences._

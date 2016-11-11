@@ -9,10 +9,10 @@ object Dependencies {
     val config = "1.3.0"
     val consul = "0.13.2"
     val configs = "0.4.4"
-    val logging = "3.1.0"
+    val logging = "3.5.0"
     val scala211 = "2.11.8"
     val scala212 = "2.12.0"
-    val scalaTest = "2.2.6"
+    val scalaTest = "3.0.0"
   }
 
   object Compile {

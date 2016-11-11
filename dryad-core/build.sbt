@@ -1,5 +1,5 @@
-DryadBuild.commonSettings
+enablePlugins(Setting)
+
+enablePlugins(Formatting)
 
 libraryDependencies ++= Dependencies.dryadCore
-
-Formatting.formatSettings
