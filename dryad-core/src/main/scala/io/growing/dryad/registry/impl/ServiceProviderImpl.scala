@@ -30,7 +30,7 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
     val port = serviceConfig.getInt("port")
     val group = config.getString("dryad.group")
     val ttl = serviceConfig.getLongOpt("ttl").getOrElse(10.seconds.toSeconds)
-    val pattern = serviceConfig.getStringOpt("pattern").getOrElse("/")
+    val pattern = serviceConfig.getStringOpt("pattern").getOrElse("/*")
     val schema = serviceConfig.getStringOpt("schema").getOrElse("http")
     val name = config.getString("dryad.namespace")
     val id = Hashing.md5().hashString(local.replace(".", "-") + s"-$port-$group", Charsets.UTF_8).toString
