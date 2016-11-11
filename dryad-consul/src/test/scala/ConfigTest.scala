@@ -4,13 +4,13 @@ import io.growing.dryad.ConfigSystem
 import io.growing.dryad.client.ConsulClient
 import org.scalatest._
 
-@Ignore class AppTest extends FunSuite {
+@Ignore class ConfigTest extends FunSuite {
 
   test("Consul client") {
     val configSystem = ConfigSystem()
     val group = configSystem.group
     val namespace = configSystem.namespace
-    ConsulClient.client(namespace, group).putValue(
+    ConsulClient.kvClient.putValue(
       ConsulClient.path(namespace, group, "application.conf"),
       """
         {
@@ -25,7 +25,7 @@ import org.scalatest._
 
     for (i ← 1 to 10) {
       val name = UUID.randomUUID().toString
-      ConsulClient.client(namespace, group).putValue(
+      ConsulClient.kvClient.putValue(
         ConsulClient.path(namespace, group, "application.conf"),
         s"""
         {
@@ -41,14 +41,14 @@ import org.scalatest._
       assertResult(name)(config.name)
     }
 
-    ConsulClient.client(namespace, group).deleteKey(ConsulClient.path(namespace, group, "application.conf"))
+    ConsulClient.kvClient.deleteKey(ConsulClient.path(namespace, group, "application.conf"))
   }
 
   test("Consul client2") {
     val configSystem = ConfigSystem()
     val group = configSystem.group
     val namespace = configSystem.namespace
-    ConsulClient.client(namespace, group).putValue(
+    ConsulClient.kvClient.putValue(
       ConsulClient.path(namespace, group, "application.conf"),
       """
         {
@@ -68,7 +68,6 @@ import org.scalatest._
       Thread.sleep(1000)
     }
 
-    ConsulClient.client(namespace, group).deleteKey(ConsulClient.path(namespace, group, "application.conf"))
+    ConsulClient.kvClient.deleteKey(ConsulClient.path(namespace, group, "application.conf"))
   }
-
 }

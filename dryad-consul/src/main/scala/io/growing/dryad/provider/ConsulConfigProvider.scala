@@ -34,7 +34,7 @@ class ConsulConfigProvider extends ConfigProvider {
 
   override def load(name: String, namespace: String, group: String, listener: ConfigChangeListener): ConfigurationDesc = {
     val path = ConsulClient.path(namespace, group, name)
-    val config = ConsulClient.client(namespace, group).getValue(path)
+    val config = ConsulClient.kvClient.getValue(path)
     if (!config.isPresent) {
       throw new ConfigurationNotFoundException(path)
     }
@@ -55,7 +55,6 @@ class ConsulConfigProvider extends ConfigProvider {
 
   private[this] class Watcher(namespace: String, group: String, name: String) {
     private[this] val path = ConsulClient.path(namespace, group, name)
-    private[this] val kvClient = ConsulClient.client(namespace, group)
     private[this] val callback: ConsulResponseCallback[Optional[Value]] = new ConsulResponseCallback[Optional[Value]]() {
       private[this] val index = new AtomicReference[BigInteger]
 
@@ -77,10 +76,10 @@ class ConsulConfigProvider extends ConfigProvider {
       }
 
       private def watch(): Unit = {
-        kvClient.getValue(path, QueryOptions.blockMinutes(BLOCK_QUERY_MINS, index.get()).build(), this)
+        ConsulClient.kvClient.getValue(path, QueryOptions.blockMinutes(BLOCK_QUERY_MINS, index.get()).build(), this)
       }
     }
-    kvClient.getValue(name, QueryOptions.blockMinutes(BLOCK_QUERY_MINS, new BigInteger("0")).build(), callback)
+    ConsulClient.kvClient.getValue(name, QueryOptions.blockMinutes(BLOCK_QUERY_MINS, new BigInteger("0")).build(), callback)
   }
 
 }
