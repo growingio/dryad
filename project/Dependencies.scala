@@ -5,12 +5,13 @@ object Dependencies {
   object Versions {
     val guava = "19.0"
     val cglib = "3.2.2"
-    val scala = "2.11.8"
     val jersey = "2.22.2"
     val config = "1.3.0"
     val consul = "0.13.2"
     val configs = "0.4.4"
     val logging = "3.1.0"
+    val scala211 = "2.11.8"
+    val scala212 = "2.12.0"
     val scalaTest = "2.2.6"
   }
 

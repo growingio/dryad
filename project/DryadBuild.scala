@@ -7,7 +7,8 @@ object DryadBuild extends Build {
   lazy val commonSettings = Seq(
     version := "1.0.0-SNAPSHOT",
     organization := "io.growing",
-    scalaVersion := Versions.scala
+    scalaVersion := Versions.scala211,
+    crossScalaVersions := Seq(Versions.scala211, Versions.scala212)
   )
 
   lazy val core = Project(id = "dryad-core", base = file("dryad-core"))
