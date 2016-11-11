@@ -6,8 +6,9 @@ import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.typesafe.config.Config
 import io.growing.dryad.registry.dto.Service
-import io.growing.dryad.registry.{ServiceRegistry, Servlet}
+import io.growing.dryad.registry.{ServiceProvider, ServiceRegistry}
 import io.growing.dryad.util.ConfigUtils._
+
 import scala.concurrent.duration._
 
 /**
@@ -17,7 +18,7 @@ import scala.concurrent.duration._
  *
  * @author Andy Ai
  */
-class ServletImpl(config: Config) extends Servlet {
+class ServiceProviderImpl(config: Config) extends ServiceProvider {
   private[this] val registry: ServiceRegistry = {
     val registryName = config.getString("dryad.registry")
     Class.forName(registryName).newInstance().asInstanceOf[ServiceRegistry]
