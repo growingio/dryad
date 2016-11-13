@@ -22,8 +22,6 @@ object Dependencies {
     val configs = "com.github.kxbmap" %% "configs" % Versions.configs
     val consul = "com.orbitz.consul" % "consul-client" % Versions.consul
     val logging = "com.typesafe.scala-logging" %% "scala-logging" % Versions.logging
-    val jerseyClient = "org.glassfish.jersey.core" % "jersey-client" % Versions.jersey
-    val jerseyConnector = "org.glassfish.jersey.connectors" % "jersey-grizzly-connector" % Versions.jersey
   }
 
   object Test {
@@ -34,5 +32,5 @@ object Dependencies {
 
   val dryadCore: Seq[ModuleID] = Seq(configs, cglib, logging, config, guava, Test.scalaTest)
 
-  val dryadConsul: Seq[ModuleID] = Seq(jerseyClient, jerseyConnector, consul, Test.scalaTest)
+  val dryadConsul: Seq[ModuleID] = Seq(consul, Test.scalaTest)
 }
