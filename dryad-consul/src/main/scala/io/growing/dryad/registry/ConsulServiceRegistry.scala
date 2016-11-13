@@ -56,9 +56,10 @@ class ConsulServiceRegistry extends ServiceRegistry {
   override def register(service: Service): Unit = {
     val ttlCheck = Registration.RegCheck.ttl(service.ttl)
     val tags: Seq[String] = Seq(
-      s"group = ${service.group}",
-      s"schema = ${service.schema}",
-      s"pattern = ${service.pattern}"
+      s"""type = "microservice"""",
+      s"""group = "${service.group}"""",
+      s"""schema = "${service.schema}"""",
+      s"""pattern = "${service.pattern}""""
     )
     val registration = ImmutableRegistration.builder()
       .id(service.id)

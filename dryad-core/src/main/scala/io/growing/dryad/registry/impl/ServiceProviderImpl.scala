@@ -26,15 +26,15 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
 
   private[this] val service: Service = {
     val serviceConfig = config.getConfig("dryad.service")
-    val local = InetAddress.getLocalHost.getHostAddress
     val port = serviceConfig.getInt("port")
     val group = config.getString("dryad.group")
     val ttl = serviceConfig.getLongOpt("ttl").getOrElse(10.seconds.toSeconds)
     val pattern = serviceConfig.getStringOpt("pattern").getOrElse("/*")
     val schema = serviceConfig.getStringOpt("schema").getOrElse("http")
     val name = config.getString("dryad.namespace")
-    val id = Hashing.md5().hashString(local.replace(".", "-") + s"-$port-$group", Charsets.UTF_8).toString
-    Service(id, name, schema, local, port, pattern, group, ttl)
+    val address = serviceConfig.getStringOpt("address").getOrElse(InetAddress.getLocalHost.getHostAddress)
+    val id = Hashing.md5().hashString(address + s"-$port-$group", Charsets.UTF_8).toString
+    Service(id, name, schema, address, port, pattern, group, ttl)
   }
 
   override def online(): Unit = registry.register(service)
