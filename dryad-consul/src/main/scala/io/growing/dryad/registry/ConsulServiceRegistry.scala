@@ -9,7 +9,7 @@ import com.orbitz.consul.model.agent.{ImmutableRegistration, Registration}
 import io.growing.dryad.client.ConsulClient
 import io.growing.dryad.registry.dto.Service
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 /**
  * Component:
@@ -24,10 +24,8 @@ class ConsulServiceRegistry extends ServiceRegistry {
     private lazy val executorService = executor()
 
     override def runOneIteration(): Unit = {
-      services.foreach { service ⇒
-        executorService.execute(new Runnable {
-          override def run(): Unit = ConsulClient.agentClient.pass(service.id, s"pass in ${System.currentTimeMillis()}")
-        })
+      services.asScala.foreach { service ⇒
+        executorService.execute(() ⇒ ConsulClient.agentClient.pass(service.id, s"pass in ${System.currentTimeMillis()}"))
       }
     }
 
@@ -35,16 +33,14 @@ class ConsulServiceRegistry extends ServiceRegistry {
 
     override def shutDown(): Unit = {
       val fixedThreadPool = Executors.newFixedThreadPool(services.size())
-      services.foreach { service ⇒
-        fixedThreadPool.execute(new Runnable {
-          override def run(): Unit = ConsulClient.agentClient.fail(service.id, s"system shutdown in ${System.currentTimeMillis()}")
-        })
+      services.asScala.foreach { service ⇒
+        fixedThreadPool.execute(() ⇒ ConsulClient.agentClient.fail(service.id, s"system shutdown in ${System.currentTimeMillis()}"))
       }
       fixedThreadPool.shutdown()
       fixedThreadPool.awaitTermination(1, TimeUnit.MINUTES)
     }
   }
-  private[this] val scheduler: ServiceManager = new ServiceManager(Seq(executorService)).startAsync()
+  private[this] val scheduler: ServiceManager = new ServiceManager(Seq(executorService).asJava).startAsync()
 
   Runtime.getRuntime.addShutdownHook(new Thread {
     override def run(): Unit = {
@@ -74,7 +70,7 @@ class ConsulServiceRegistry extends ServiceRegistry {
   }
 
   override def deregister(serviceId: String): Unit = {
-    services.find(s ⇒ s.id == serviceId).foreach(s ⇒ services.remove(s))
+    services.asScala.find(s ⇒ s.id == serviceId).foreach(s ⇒ services.remove(s))
     ConsulClient.agentClient.fail(serviceId)
     ConsulClient.agentClient.deregister(serviceId)
   }

@@ -2,7 +2,6 @@ package io.growing.dryad.provider
 
 import java.math.BigInteger
 import java.util
-import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicReference
 import java.util.{List ⇒ JList}
 
@@ -18,7 +17,7 @@ import io.growing.dryad.exception.ConfigurationNotFoundException
 import io.growing.dryad.internal.ConfigurationDesc
 import io.growing.dryad.watcher.ConfigChangeListener
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 /**
  * Component:
@@ -45,12 +44,8 @@ class ConsulConfigProvider extends ConfigProvider {
   }
 
   private[this] def addListener(namespace: String, group: String, name: String, listener: ConfigChangeListener): Unit = {
-    listeners.get(name, new Callable[JList[ConfigChangeListener]] {
-      override def call(): JList[ConfigChangeListener] = new util.ArrayList[ConfigChangeListener]()
-    }).add(listener)
-    watchers.get(name, new Callable[Watcher] {
-      override def call(): Watcher = new Watcher(namespace, group, name)
-    })
+    listeners.get(name, () ⇒ new util.ArrayList[ConfigChangeListener]()).add(listener)
+    watchers.get(name, () ⇒ new Watcher(namespace, group, name))
   }
 
   private[this] class Watcher(namespace: String, group: String, name: String) {
@@ -63,7 +58,7 @@ class ConsulConfigProvider extends ConfigProvider {
           val value = consulResponse.getResponse.get()
           val payload = new String(BaseEncoding.base64().decode(value.getValue.get()), Charsets.UTF_8)
           val configuration = ConfigurationDesc(name, payload, value.getModifyIndex, namespace, group)
-          listeners.getIfPresent(name).foreach { listener ⇒
+          listeners.getIfPresent(name).asScala.foreach { listener ⇒
             listener.onChange(configuration)
           }
         }

@@ -1,4 +1,4 @@
-name := "dryad-root"
+name := "dryad"
 
 enablePlugins(DontPublish)
 
