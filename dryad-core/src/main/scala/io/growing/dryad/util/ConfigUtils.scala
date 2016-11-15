@@ -19,6 +19,8 @@ object ConfigUtils {
 
     implicit def getStringOpt(path: String): Option[String] = getOpt(config.getString(path))
 
+    implicit def getConfigOpt(path: String): Option[Config] = getOpt(config.getConfig(path))
+
     private[this] def getOpt[T](f: ⇒ T): Option[T] = {
       Try(f) match {
         case Success(value) ⇒ Some(value)

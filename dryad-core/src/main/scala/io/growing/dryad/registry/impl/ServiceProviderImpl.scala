@@ -6,7 +6,7 @@ import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.typesafe.config.Config
 import io.growing.dryad.registry.dto.Service
-import io.growing.dryad.registry.{ServiceProvider, ServiceRegistry}
+import io.growing.dryad.registry.{HealthCheck, HttpHealthCheck, ServiceProvider, ServiceRegistry, TTLHealthCheck}
 import io.growing.dryad.util.ConfigUtils._
 
 import scala.concurrent.duration._
@@ -28,13 +28,28 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
     val serviceConfig = config.getConfig("dryad.service")
     val port = serviceConfig.getInt("port")
     val group = config.getString("dryad.group")
-    val ttl = serviceConfig.getLongOpt("ttl").getOrElse(10.seconds.toSeconds)
     val pattern = serviceConfig.getStringOpt("pattern").getOrElse("/*")
     val schema = serviceConfig.getStringOpt("schema").getOrElse("http")
     val name = config.getString("dryad.namespace")
     val address = serviceConfig.getStringOpt("address").getOrElse(InetAddress.getLocalHost.getHostAddress)
     val id = Hashing.md5().hashString(address + s"-$port-$group", Charsets.UTF_8).toString
-    Service(id, name, schema, address, port, pattern, group, ttl)
+    val check = getCheck(serviceConfig, schema, address, port)
+    Service(id, name, schema, address, port, pattern, group, check)
+  }
+
+  private[this] def getCheck(conf: Config, schema: String, address: String, port: Int): HealthCheck = {
+    conf.getConfigOpt("check") match {
+      case None ⇒ TTLHealthCheck(10.seconds.toSeconds)
+      case Some(checkConfig) ⇒
+        val ttl = checkConfig.getLongOpt("ttl").map(ttl ⇒ TTLHealthCheck(ttl))
+        val http = checkConfig.getStringOpt("url").map { url ⇒
+          val _url = if (url.startsWith("/")) s"$schema://$address:$port$url" else url
+          val interval = checkConfig.getLongOpt("interval").getOrElse(10.seconds.toSeconds)
+          val timeout = checkConfig.getLongOpt("timeout").getOrElse(5.seconds.toSeconds)
+          HttpHealthCheck(_url, interval, timeout)
+        }
+        (ttl orElse http).get
+    }
   }
 
   override def online(): Unit = registry.register(service)

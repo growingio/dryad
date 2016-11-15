@@ -6,6 +6,7 @@ import java.util.{ArrayList ⇒ JArrayList, List ⇒ JList}
 import com.google.common.util.concurrent.AbstractScheduledService.Scheduler
 import com.google.common.util.concurrent.{AbstractScheduledService, ServiceManager}
 import com.orbitz.consul.model.agent.{ImmutableRegistration, Registration}
+import com.typesafe.scalalogging.LazyLogging
 import io.growing.dryad.client.ConsulClient
 import io.growing.dryad.registry.dto.Service
 
@@ -18,13 +19,13 @@ import scala.collection.JavaConverters._
  *
  * @author Andy Ai
  */
-class ConsulServiceRegistry extends ServiceRegistry {
-  private[this] val services: JList[Service] = new JArrayList[Service]()
-  private val executorService: AbstractScheduledService = new AbstractScheduledService {
+class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
+  private[this] val ttlServices: JList[Service] = new JArrayList[Service]()
+  private val ttlCheckService: AbstractScheduledService = new AbstractScheduledService {
     private lazy val executorService = executor()
 
     override def runOneIteration(): Unit = {
-      services.asScala.foreach { service ⇒
+      ttlServices.asScala.foreach { service ⇒
         executorService.execute(() ⇒ ConsulClient.agentClient.pass(service.id, s"pass in ${System.currentTimeMillis()}"))
       }
     }
@@ -32,25 +33,29 @@ class ConsulServiceRegistry extends ServiceRegistry {
     override def scheduler(): Scheduler = Scheduler.newFixedRateSchedule(0, 1, TimeUnit.SECONDS)
 
     override def shutDown(): Unit = {
-      val fixedThreadPool = Executors.newFixedThreadPool(services.size())
-      services.asScala.foreach { service ⇒
+      val fixedThreadPool = Executors.newFixedThreadPool(ttlServices.size())
+      ttlServices.asScala.foreach { service ⇒
         fixedThreadPool.execute(() ⇒ ConsulClient.agentClient.fail(service.id, s"system shutdown in ${System.currentTimeMillis()}"))
       }
       fixedThreadPool.shutdown()
       fixedThreadPool.awaitTermination(1, TimeUnit.MINUTES)
     }
   }
-  private[this] val scheduler: ServiceManager = new ServiceManager(Seq(executorService).asJava).startAsync()
+  private[this] val ttlCheckScheduler: ServiceManager = new ServiceManager(Seq(ttlCheckService).asJava).startAsync()
 
   Runtime.getRuntime.addShutdownHook(new Thread {
     override def run(): Unit = {
-      scheduler.stopAsync()
-      scheduler.awaitStopped()
+      ttlCheckScheduler.stopAsync()
+      ttlCheckScheduler.awaitStopped()
     }
   })
 
   override def register(service: Service): Unit = {
-    val ttlCheck = Registration.RegCheck.ttl(service.ttl)
+    val check = service.check match {
+      case TTLHealthCheck(ttl)                     ⇒ Registration.RegCheck.ttl(ttl)
+      case HttpHealthCheck(url, interval, timeout) ⇒ Registration.RegCheck.http(url, interval, timeout)
+      case c                                       ⇒ throw new UnsupportedOperationException(s"Unsupported check: ${c.getClass.getName}")
+    }
     val tags: Seq[String] = Seq(
       s"""type = "microservice"""",
       s"""group = "${service.group}"""",
@@ -64,14 +69,18 @@ class ConsulServiceRegistry extends ServiceRegistry {
       .port(service.port)
       .addTags(tags: _*)
       .enableTagOverride(false)
-      .check(ttlCheck).build()
+      .check(check).build()
     ConsulClient.agentClient.register(registration)
-    services.add(service)
+    if (service.check.isInstanceOf[TTLHealthCheck]) {
+      ttlServices.add(service)
+    }
   }
 
   override def deregister(serviceId: String): Unit = {
-    services.asScala.find(s ⇒ s.id == serviceId).foreach(s ⇒ services.remove(s))
-    ConsulClient.agentClient.fail(serviceId)
+    ttlServices.asScala.find(s ⇒ s.id == serviceId).foreach { s ⇒
+      ttlServices.remove(s)
+      ConsulClient.agentClient.fail(serviceId)
+    }
     ConsulClient.agentClient.deregister(serviceId)
   }
 

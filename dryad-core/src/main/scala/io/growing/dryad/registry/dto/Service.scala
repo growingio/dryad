@@ -1,5 +1,7 @@
 package io.growing.dryad.registry.dto
 
+import io.growing.dryad.registry.HealthCheck
+
 /**
  * Component:
  * Description:
@@ -7,4 +9,4 @@ package io.growing.dryad.registry.dto
  *
  * @author Andy Ai
  */
-case class Service(id: String, name: String, schema: String, address: String, port: Int, pattern: String, group: String, ttl: Long)
+case class Service(id: String, name: String, schema: String, address: String, port: Int, pattern: String, group: String, check: HealthCheck)
