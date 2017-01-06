@@ -58,6 +58,7 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
     }
     val tags: Seq[String] = Seq(
       s"""type = "microservice"""",
+      s"priority = ${service.priority}",
       s"""group = "${service.group}"""",
       s"""schema = "${service.schema}"""",
       s"""pattern = "${service.pattern}""""

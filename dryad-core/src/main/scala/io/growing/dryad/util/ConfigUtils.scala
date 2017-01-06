@@ -15,6 +15,8 @@ import scala.util.{Failure, Success, Try}
 object ConfigUtils {
 
   implicit class ConfigWrapper(config: Config) {
+    implicit def getIntOpt(path: String): Option[Int] = getOpt(config.getInt(path))
+
     implicit def getLongOpt(path: String): Option[Long] = getOpt(config.getLong(path))
 
     implicit def getStringOpt(path: String): Option[String] = getOpt(config.getString(path))

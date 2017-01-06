@@ -9,4 +9,5 @@ import io.growing.dryad.registry.HealthCheck
  *
  * @author Andy Ai
  */
-case class Service(id: String, name: String, schema: String, address: String, port: Int, pattern: String, group: String, check: HealthCheck)
+final case class Service(id: String, name: String, schema: String, address: String,
+                         port: Int, pattern: String, group: String, check: HealthCheck, priority: Int)

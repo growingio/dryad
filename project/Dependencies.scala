@@ -3,11 +3,11 @@ import sbt._
 object Dependencies {
 
   object Versions {
-    val guava = "19.0"
-    val cglib = "3.2.2"
+    val guava = "20.0"
+    val cglib = "3.2.4"
     val jersey = "2.22.2"
-    val config = "1.3.0"
-    val consul = "0.13.2"
+    val config = "1.3.1"
+    val consul = "0.13.8"
     val configs = "0.4.4"
     val logging = "3.5.0"
     val scala211 = "2.11.8"
@@ -16,16 +16,16 @@ object Dependencies {
   }
 
   object Compile {
-    val cglib = "cglib" % "cglib-nodep" % Versions.cglib
-    val config = "com.typesafe" % "config" % Versions.config
-    val guava = "com.google.guava" % "guava" % Versions.guava
-    val configs = "com.github.kxbmap" %% "configs" % Versions.configs
-    val consul = "com.orbitz.consul" % "consul-client" % Versions.consul
-    val logging = "com.typesafe.scala-logging" %% "scala-logging" % Versions.logging
+    val cglib: ModuleID = "cglib" % "cglib-nodep" % Versions.cglib
+    val config: ModuleID = "com.typesafe" % "config" % Versions.config
+    val guava: ModuleID = "com.google.guava" % "guava" % Versions.guava
+    val configs: ModuleID = "com.github.kxbmap" %% "configs" % Versions.configs
+    val consul: ModuleID = "com.orbitz.consul" % "consul-client" % Versions.consul
+    val logging: ModuleID = "com.typesafe.scala-logging" %% "scala-logging" % Versions.logging
   }
 
   object Test {
-    val scalaTest = "org.scalatest" %% "scalatest" % Versions.scalaTest % "test"
+    val scalaTest: ModuleID = "org.scalatest" %% "scalatest" % Versions.scalaTest % "test"
   }
 
   import Dependencies.Compile._
