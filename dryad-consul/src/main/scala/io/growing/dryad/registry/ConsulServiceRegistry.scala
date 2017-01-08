@@ -61,7 +61,7 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
       s"priority = ${service.priority}",
       s"""group = "${service.group}"""",
       s"""schema = "${service.schema}"""",
-      s"patterns = [${service.patterns.map(p ⇒ s""""$p"""").mkString(",")}]"
+      s"""pattern = "${service.pattern}""""
     )
     val registration = ImmutableRegistration.builder()
       .id(service.id)
