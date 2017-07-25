@@ -25,6 +25,8 @@ trait ConfigSystem {
 
   def get(name: String, ignoreGroup: Boolean = false): Config
 
+  def getConfigAsString(name: String, ignoreGroup: Boolean = false): String
+
 }
 
 object ConfigSystem {
@@ -54,6 +56,10 @@ private[this] class ConfigSystemImpl(config: Config) extends ConfigSystem {
 
   override def get(name: String, ignoreGroup: Boolean = false): Config = {
     configServer.get(name, _namespace, if (ignoreGroup) None else Option(_group))
+  }
+
+  override def getConfigAsString(name: String, ignoreGroup: Boolean): String = {
+    configServer.getAsString(name, namespace, if (ignoreGroup) None else Option(_group))
   }
 
 }

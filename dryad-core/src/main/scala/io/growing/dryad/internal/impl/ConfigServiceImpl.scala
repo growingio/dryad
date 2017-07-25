@@ -6,6 +6,7 @@ import com.google.common.cache.CacheBuilder
 import com.typesafe.config.{ Config, ConfigFactory, ConfigRef }
 import io.growing.dryad.annotation.Configuration
 import io.growing.dryad.internal.{ ConfigService, ConfigurationDesc }
+import io.growing.dryad.parser.ConfigParser
 import io.growing.dryad.provider.ConfigProvider
 import io.growing.dryad.snapshot.LocalFileConfigSnapshot
 import net.sf.cglib.proxy.Enhancer
@@ -43,19 +44,23 @@ class ConfigServiceImpl(provider: ConfigProvider) extends ConfigService {
     })
   }
 
+  override def getAsString(name: String, namespace: String, group: Option[String]): String = {
+    provider.load(name, namespace, group, (configuration: ConfigurationDesc) ⇒ ()).payload
+  }
+
   private[this] def createObjectRef(clazz: Class[_], namespace: String, group: String): AnyRef = {
+    val refreshAndFlush = (configuration: ConfigurationDesc, ref: ObjectRef, parser: ConfigParser[_]) ⇒ {
+      val config = ConfigFactory.parseString(configuration.payload)
+      ref.reference.set(parser.parse(config))
+      LocalFileConfigSnapshot.flash(configuration)
+    }
     val annotation = clazz.getAnnotation(classOf[Configuration])
     val ref: ObjectRef = new ObjectRef(new AtomicReference[Any]())
     val parser = annotation.parser().newInstance()
     val _group = if (annotation.ignoreGroup()) None else Option(group)
-    val configuration = provider.load(annotation.name(), namespace, _group, (configuration: ConfigurationDesc) ⇒ {
-      val config = ConfigFactory.parseString(configuration.payload)
-      ref.reference.set(parser.parse(config))
-      LocalFileConfigSnapshot.flash(configuration)
-    })
-    LocalFileConfigSnapshot.flash(configuration)
-    val config = ConfigFactory.parseString(configuration.payload)
-    ref.reference.set(parser.parse(config))
+    val configuration = provider.load(annotation.name(), namespace, _group, (configuration: ConfigurationDesc) ⇒
+      refreshAndFlush(configuration, ref, parser))
+    refreshAndFlush(configuration, ref, parser)
 
     val enhancer = new Enhancer()
     enhancer.setSuperclass(clazz)
