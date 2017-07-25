@@ -3,9 +3,9 @@ package io.growing.dryad.provider
 import java.math.BigInteger
 import java.util
 import java.util.concurrent.atomic.AtomicReference
-import java.util.{List ⇒ JList}
+import java.util.{ List ⇒ JList }
 
-import com.google.common.base.{Charsets, Optional}
+import com.google.common.base.{ Charsets, Optional }
 import com.google.common.cache.CacheBuilder
 import com.google.common.io.BaseEncoding
 import com.orbitz.consul.async.ConsulResponseCallback
@@ -31,25 +31,25 @@ class ConsulConfigProvider extends ConfigProvider {
   private[this] val watchers = CacheBuilder.newBuilder().build[String, Watcher]()
   private[this] val listeners = CacheBuilder.newBuilder().build[String, JList[ConfigChangeListener]]()
 
-  override def load(name: String, namespace: String, group: String, listener: ConfigChangeListener): ConfigurationDesc = {
-    val path = ConsulClient.path(namespace, group, name)
+  override def load(name: String, namespace: String, group: Option[String], listener: ConfigChangeListener): ConfigurationDesc = {
+    val path = ConsulClient.path(name, namespace, group)
     val config = ConsulClient.kvClient.getValue(path)
     if (!config.isPresent) {
       throw new ConfigurationNotFoundException(path)
     }
     val version = config.get().getModifyIndex
     val payload = new String(BaseEncoding.base64().decode(config.get().getValue.get()), Charsets.UTF_8)
-    addListener(namespace, group, name, listener)
+    addListener(name, namespace, group, listener)
     ConfigurationDesc(name, payload, version, namespace, group)
   }
 
-  private[this] def addListener(namespace: String, group: String, name: String, listener: ConfigChangeListener): Unit = {
+  private[this] def addListener(name: String, namespace: String, group: Option[String], listener: ConfigChangeListener): Unit = {
     listeners.get(name, () ⇒ new util.ArrayList[ConfigChangeListener]()).add(listener)
-    watchers.get(name, () ⇒ new Watcher(namespace, group, name))
+    watchers.get(name, () ⇒ new Watcher(name, namespace, group))
   }
 
-  private[this] class Watcher(namespace: String, group: String, name: String) {
-    private[this] val path = ConsulClient.path(namespace, group, name)
+  private[this] class Watcher(name: String, namespace: String, group: Option[String]) {
+    private[this] val path = ConsulClient.path(name, namespace, group)
     private[this] val callback: ConsulResponseCallback[Optional[Value]] = new ConsulResponseCallback[Optional[Value]]() {
       private[this] val index = new AtomicReference[BigInteger]
 

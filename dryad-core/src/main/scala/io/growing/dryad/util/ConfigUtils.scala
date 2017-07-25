@@ -3,7 +3,7 @@ package io.growing.dryad.util
 import com.typesafe.config.Config
 
 import scala.language.implicitConversions
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 import scala.collection.JavaConverters._
 
 /**

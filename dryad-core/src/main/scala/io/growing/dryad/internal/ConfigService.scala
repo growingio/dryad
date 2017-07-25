@@ -17,7 +17,7 @@ trait ConfigService {
 
   def get[T: ClassTag](namespace: String, group: String): T
 
-  def get(namespace: String, group: String, name: String): Config
+  def get(name: String, namespace: String, group: Option[String]): Config
 
 }
 

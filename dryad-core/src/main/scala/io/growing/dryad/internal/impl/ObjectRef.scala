@@ -3,7 +3,7 @@ package io.growing.dryad.internal.impl
 import java.lang.reflect.Method
 import java.util.concurrent.atomic.AtomicReference
 
-import net.sf.cglib.proxy.{MethodInterceptor, MethodProxy}
+import net.sf.cglib.proxy.{ MethodInterceptor, MethodProxy }
 
 /**
  * Component:

@@ -1,7 +1,7 @@
 import io.growing.dryad.registry.ServiceProvider
 import org.scalatest._
 
-@Ignore class ServiceTest extends FunSuite {
+class ServiceTest extends FunSuite {
 
   test("Register service") {
     ServiceProvider().online()

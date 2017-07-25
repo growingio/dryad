@@ -3,9 +3,9 @@ package io.growing.dryad.internal.impl
 import java.util.concurrent.atomic.AtomicReference
 
 import com.google.common.cache.CacheBuilder
-import com.typesafe.config.{Config, ConfigFactory, ConfigRef}
+import com.typesafe.config.{ Config, ConfigFactory, ConfigRef }
 import io.growing.dryad.annotation.Configuration
-import io.growing.dryad.internal.{ConfigService, ConfigurationDesc}
+import io.growing.dryad.internal.{ ConfigService, ConfigurationDesc }
 import io.growing.dryad.provider.ConfigProvider
 import io.growing.dryad.snapshot.LocalFileConfigSnapshot
 import net.sf.cglib.proxy.Enhancer
@@ -29,7 +29,7 @@ class ConfigServiceImpl(provider: ConfigProvider) extends ConfigService {
     objects.get(clazz.getName, () ⇒ createObjectRef(clazz, namespace, group)).asInstanceOf[T]
   }
 
-  override def get(namespace: String, group: String, name: String): Config = {
+  override def get(name: String, namespace: String, group: Option[String]): Config = {
     configs.get(name, () ⇒ {
       val underlying: AtomicReference[Config] = new AtomicReference[Config]()
       val c = provider.load(name, namespace, group, (configuration: ConfigurationDesc) ⇒ {
@@ -47,7 +47,8 @@ class ConfigServiceImpl(provider: ConfigProvider) extends ConfigService {
     val annotation = clazz.getAnnotation(classOf[Configuration])
     val ref: ObjectRef = new ObjectRef(new AtomicReference[Any]())
     val parser = annotation.parser().newInstance()
-    val configuration = provider.load(annotation.name(), namespace, group, (configuration: ConfigurationDesc) ⇒ {
+    val _group = if (annotation.ignoreGroup()) None else Option(group)
+    val configuration = provider.load(annotation.name(), namespace, _group, (configuration: ConfigurationDesc) ⇒ {
       val config = ConfigFactory.parseString(configuration.payload)
       ref.reference.set(parser.parse(config))
       LocalFileConfigSnapshot.flash(configuration)

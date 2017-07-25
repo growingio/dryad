@@ -1,14 +1,14 @@
 import java.lang.reflect.Method
 import java.util.concurrent.atomic.AtomicReference
 
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.{ Config, ConfigFactory }
 import configs.Configs
 import io.growing.dryad.internal.ConfigurationDesc
 import io.growing.dryad.parser.ConfigParser
 import io.growing.dryad.provider.ConfigProvider
 import io.growing.dryad.watcher.ConfigChangeListener
-import io.growing.dryad.{ConfigSystem, annotation}
-import net.sf.cglib.proxy.{Enhancer, MethodInterceptor, MethodProxy}
+import io.growing.dryad.{ ConfigSystem, annotation }
+import net.sf.cglib.proxy.{ Enhancer, MethodInterceptor, MethodProxy }
 import org.scalatest._
 
 class AppTest extends FunSuite {
@@ -20,8 +20,7 @@ class AppTest extends FunSuite {
           group: prod
           provider: MemoryProvider
         }
-      """.stripMargin
-    )
+      """.stripMargin)
     val configSystem = ConfigSystem(dryadConfig)
     val started = System.currentTimeMillis()
     val devConfig = configSystem.get[DevConfig]
@@ -66,7 +65,8 @@ class AppTest extends FunSuite {
 }
 
 class MemoryProvider extends ConfigProvider {
-  override def load(name: String, namespace: String, group: String, listener: ConfigChangeListener): ConfigurationDesc = {
+
+  override def load(name: String, namespace: String, group: Option[String], listener: ConfigChangeListener): ConfigurationDesc = {
     val thread = new Thread() {
       override def run(): Unit = {
         Thread.sleep(2000)
@@ -79,9 +79,7 @@ class MemoryProvider extends ConfigProvider {
               addr: {
                 city: Beijing
               }
-            """.stripMargin, 1, namespace, group
-          )
-        )
+            """.stripMargin, 1, namespace, group))
       }
     }
     thread.start()
@@ -93,8 +91,7 @@ class MemoryProvider extends ConfigProvider {
         addr: {
           city: Shanghai
         }
-      """.stripMargin, 0, namespace, group
-    )
+      """.stripMargin, 0, namespace, group)
   }
 
 }

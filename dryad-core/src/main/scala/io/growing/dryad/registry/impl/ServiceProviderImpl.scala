@@ -6,7 +6,7 @@ import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.typesafe.config.Config
 import io.growing.dryad.registry.dto.Service
-import io.growing.dryad.registry.{HealthCheck, HttpHealthCheck, ServiceProvider, ServiceRegistry, TTLHealthCheck}
+import io.growing.dryad.registry.{ HealthCheck, HttpHealthCheck, ServiceProvider, ServiceRegistry, TTLHealthCheck }
 import io.growing.dryad.util.ConfigUtils._
 
 import scala.concurrent.duration._

@@ -12,6 +12,6 @@ import io.growing.dryad.watcher.ConfigChangeListener
  */
 trait ConfigProvider {
 
-  def load(name: String, namespace: String, group: String, listener: ConfigChangeListener): ConfigurationDesc
+  def load(name: String, namespace: String, group: Option[String], listener: ConfigChangeListener): ConfigurationDesc
 
 }

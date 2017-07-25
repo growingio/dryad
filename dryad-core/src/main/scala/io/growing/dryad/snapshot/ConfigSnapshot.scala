@@ -1,6 +1,6 @@
 package io.growing.dryad.snapshot
 
-import java.nio.file.{FileSystems, Files, Paths, StandardOpenOption}
+import java.nio.file.{ FileSystems, Files, Paths, StandardOpenOption }
 
 import com.google.common.base.Charsets
 import io.growing.dryad.internal.ConfigurationDesc
@@ -19,8 +19,8 @@ trait ConfigSnapshot {
 }
 
 object LocalFileConfigSnapshot extends ConfigSnapshot {
-  val separator = FileSystems.getDefault.getSeparator
-  val workshop = {
+  val separator: String = FileSystems.getDefault.getSeparator
+  val workshop: String = {
     val name = s"${System.getProperty("user.home")}$separator.dryad${separator}snapshots"
     val path = Paths.get(name)
     if (!Files.exists(path)) {
@@ -30,7 +30,9 @@ object LocalFileConfigSnapshot extends ConfigSnapshot {
   }
 
   override def flash(configuration: ConfigurationDesc): Unit = {
-    val dir = Paths.get(Array(workshop, configuration.namespace, configuration.group).filter(_.trim.nonEmpty).mkString(separator))
+    val (name, namespace) = (configuration.name, configuration.namespace)
+    val paths = configuration.group.fold(Seq(namespace, name))(group ⇒ Seq(namespace, group, name))
+    val dir = Paths.get(paths.filterNot(_.trim.isEmpty).mkString(separator))
     if (!Files.exists(dir)) {
       Files.createDirectories(dir)
     }

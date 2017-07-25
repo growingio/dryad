@@ -1,6 +1,6 @@
 package io.growing.dryad.registry
 
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.{ Config, ConfigFactory }
 import io.growing.dryad.registry.impl.ServiceProviderImpl
 
 /**

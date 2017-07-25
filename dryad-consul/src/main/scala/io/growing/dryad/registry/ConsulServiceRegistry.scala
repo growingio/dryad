@@ -1,11 +1,11 @@
 package io.growing.dryad.registry
 
-import java.util.concurrent.{Executors, TimeUnit}
-import java.util.{ArrayList ⇒ JArrayList, List ⇒ JList}
+import java.util.concurrent.{ Executors, TimeUnit }
+import java.util.{ ArrayList ⇒ JArrayList, List ⇒ JList }
 
 import com.google.common.util.concurrent.AbstractScheduledService.Scheduler
-import com.google.common.util.concurrent.{AbstractScheduledService, ServiceManager}
-import com.orbitz.consul.model.agent.{ImmutableRegistration, Registration}
+import com.google.common.util.concurrent.{ AbstractScheduledService, ServiceManager }
+import com.orbitz.consul.model.agent.{ ImmutableRegistration, Registration }
 import com.typesafe.scalalogging.LazyLogging
 import io.growing.dryad.client.ConsulClient
 import io.growing.dryad.registry.dto.Service
@@ -61,8 +61,7 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
       s"priority = ${service.priority}",
       s"""group = "${service.group}"""",
       s"""schema = "${service.schema}"""",
-      s"""pattern = "${service.pattern}""""
-    )
+      s"""pattern = "${service.pattern}"""")
     val registration = ImmutableRegistration.builder()
       .id(service.id)
       .name(service.name)

@@ -1,6 +1,6 @@
 package io.growing.dryad
 
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.{ Config, ConfigFactory }
 import io.growing.dryad.internal.ConfigService
 import io.growing.dryad.provider.ConfigProvider
 
@@ -23,7 +23,7 @@ trait ConfigSystem {
 
   def get[T: ClassTag]: T
 
-  def get(name: String): Config
+  def get(name: String, ignoreGroup: Boolean = false): Config
 
 }
 
@@ -52,7 +52,9 @@ private[this] class ConfigSystemImpl(config: Config) extends ConfigSystem {
 
   override def get[T: ClassTag]: T = configServer.get[T](_namespace, _group)
 
-  override def get(name: String): Config = configServer.get(_namespace, _group, name)
+  override def get(name: String, ignoreGroup: Boolean = false): Config = {
+    configServer.get(name, _namespace, if (ignoreGroup) None else Option(_group))
+  }
 
 }
 

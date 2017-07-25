@@ -1,8 +1,10 @@
 package io.growing.dryad.client
 
 import com.google.common.net.HostAndPort
-import com.orbitz.consul.Consul
-import com.typesafe.config.{Config, ConfigFactory}
+import com.orbitz.consul.{ AgentClient, CatalogClient, Consul, KeyValueClient }
+import com.typesafe.config.{ Config, ConfigFactory }
+
+import scala.util.{ Failure, Success, Try }
 
 /**
  * Component:
@@ -12,23 +14,31 @@ import com.typesafe.config.{Config, ConfigFactory}
  * @author Andy Ai
  */
 object ConsulClient {
+  private[this] val defaultConnectTimeout: Int = 1000
   private[this] val config: Config = ConfigFactory.load()
   private[this] val port: Int = config.getInt("dryad.consul.port")
   private[this] val host: String = config.getString("dryad.consul.host")
+  private[this] val connectTimeout = Try(config.getInt("dryad.consul.connectTimeout")) match {
+    case Success(timeout) ⇒ timeout
+    case Failure(_)       ⇒ defaultConnectTimeout
+  }
   private[this] lazy val client = {
     Consul.builder().withHostAndPort(HostAndPort.fromParts(host, port))
-      .withConnectTimeoutMillis(1000)
+      .withConnectTimeoutMillis(connectTimeout)
       .build()
   }
 
-  lazy val kvClient = client.keyValueClient()
+  lazy val kvClient: KeyValueClient = client.keyValueClient()
 
-  lazy val agentClient = client.agentClient()
+  lazy val agentClient: AgentClient = client.agentClient()
 
-  lazy val catalogClient = client.catalogClient()
+  lazy val catalogClient: CatalogClient = client.catalogClient()
 
-  def path(namespace: String, group: String, name: String): String = {
-    Array(namespace, group, name).filter(_.trim.nonEmpty).mkString("/")
+  def path(name: String, namespace: String, group: Option[String] = None): String = {
+    val paths = group.fold(Seq(namespace, name))(_group ⇒ Seq(namespace, _group, name))
+    paths.filterNot(_.trim.isEmpty).mkString("/")
   }
+
+  def path(name: String, namespace: String, group: String): String = path(name, namespace, Option(group))
 
 }

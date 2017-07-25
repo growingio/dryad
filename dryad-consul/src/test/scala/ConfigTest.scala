@@ -11,14 +11,13 @@ import org.scalatest._
     val group = configSystem.group
     val namespace = configSystem.namespace
     ConsulClient.kvClient.putValue(
-      ConsulClient.path(namespace, group, "application.conf"),
+      ConsulClient.path("application.conf", namespace, group),
       """
         {
           name: "Andy.Ai"
           age: 18
         }
-      """.stripMargin
-    )
+      """.stripMargin)
     val config = configSystem.get[ApplicationConfig]
     assertResult(18)(config.age)
     assertResult("Andy.Ai")(config.name)
@@ -26,14 +25,13 @@ import org.scalatest._
     for (i ← 1 to 10) {
       val name = UUID.randomUUID().toString
       ConsulClient.kvClient.putValue(
-        ConsulClient.path(namespace, group, "application.conf"),
+        ConsulClient.path("application.conf", namespace, group),
         s"""
         {
           name: "$name"
           age: $i
         }
-        """.stripMargin
-      )
+        """.stripMargin)
 
       Thread.sleep(20)
 
@@ -41,7 +39,7 @@ import org.scalatest._
       assertResult(name)(config.name)
     }
 
-    ConsulClient.kvClient.deleteKey(ConsulClient.path(namespace, group, "application.conf"))
+    ConsulClient.kvClient.deleteKey(ConsulClient.path("application.conf", namespace, group))
   }
 
   test("Consul client2") {
@@ -49,25 +47,60 @@ import org.scalatest._
     val group = configSystem.group
     val namespace = configSystem.namespace
     ConsulClient.kvClient.putValue(
-      ConsulClient.path(namespace, group, "application.conf"),
+      ConsulClient.path("application.conf", namespace, group),
       """
         {
           name: "Andy.Ai"
           age: 18
         }
-      """.stripMargin
-    )
+      """.stripMargin)
     val config = configSystem.get[ApplicationConfig]
     assertResult(18)(config.age)
     assertResult("Andy.Ai")(config.name)
 
-    Thread.sleep(1000 * 60 * 5)
+    Thread.sleep(10000)
 
     for (i ← 1 to 100000000) {
       println(s"name: ${config.name}, age: ${config.age}")
       Thread.sleep(1000)
     }
 
-    ConsulClient.kvClient.deleteKey(ConsulClient.path(namespace, group, "application.conf"))
+    ConsulClient.kvClient.deleteKey(ConsulClient.path("application.conf", namespace, group))
+  }
+
+  test("Consul client3") {
+    val configSystem = ConfigSystem()
+    val group = configSystem.group
+    val namespace = configSystem.namespace
+    ConsulClient.kvClient.putValue(
+      ConsulClient.path("application.conf", namespace),
+      """
+        {
+          name: "Andy.Ai"
+          age: 18
+        }
+      """.stripMargin)
+    val config = configSystem.get[ApplicationConfig2]
+    assertResult(18)(config.age)
+    assertResult("Andy.Ai")(config.name)
+
+    for (i ← 1 to 10) {
+      val name = UUID.randomUUID().toString
+      ConsulClient.kvClient.putValue(
+        ConsulClient.path("application.conf", namespace),
+        s"""
+        {
+          name: "$name"
+          age: $i
+        }
+        """.stripMargin)
+
+      Thread.sleep(20)
+
+      assertResult(i)(config.age)
+      assertResult(name)(config.name)
+    }
+
+    ConsulClient.kvClient.deleteKey(ConsulClient.path("application.conf", namespace))
   }
 }

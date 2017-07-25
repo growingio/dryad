@@ -20,4 +20,6 @@ public @interface Configuration {
     String name();
 
     Class<? extends ConfigParser<?>> parser();
+
+    boolean ignoreGroup() default false;
 }
