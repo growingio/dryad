@@ -45,7 +45,7 @@ class ConfigServiceImpl(provider: ConfigProvider) extends ConfigService {
   }
 
   override def getConfigAsString(name: String, namespace: String, group: Option[String]): String = {
-    provider.load(name, namespace, group, (configuration: ConfigurationDesc) ⇒ ()).payload
+    provider.load(name, namespace, group).payload
   }
 
   private[this] def createObjectRef(clazz: Class[_], namespace: String, group: String): AnyRef = {

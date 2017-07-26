@@ -31,7 +31,15 @@ class ConsulConfigProvider extends ConfigProvider {
   private[this] val watchers = CacheBuilder.newBuilder().build[String, Watcher]()
   private[this] val listeners = CacheBuilder.newBuilder().build[String, JList[ConfigChangeListener]]()
 
+  override def load(name: String, namespace: String, group: Option[String]): ConfigurationDesc = {
+    doLoad(name, namespace, group, None)
+  }
+
   override def load(name: String, namespace: String, group: Option[String], listener: ConfigChangeListener): ConfigurationDesc = {
+    doLoad(name,namespace,group,Option(listener))
+  }
+
+  private[this] def doLoad(name: String, namespace: String, group: Option[String], listenerOpt: Option[ConfigChangeListener]): ConfigurationDesc = {
     val path = ConsulClient.path(name, namespace, group)
     val config = ConsulClient.kvClient.getValue(path)
     if (!config.isPresent) {
@@ -39,7 +47,7 @@ class ConsulConfigProvider extends ConfigProvider {
     }
     val version = config.get().getModifyIndex
     val payload = new String(BaseEncoding.base64().decode(config.get().getValue.get()), Charsets.UTF_8)
-    addListener(name, namespace, group, listener)
+    listenerOpt.foreach(listener => addListener(name, namespace, group, listener))
     ConfigurationDesc(name, payload, version, namespace, group)
   }
 
