@@ -36,7 +36,7 @@ class ConsulConfigProvider extends ConfigProvider {
   }
 
   override def load(name: String, namespace: String, group: Option[String], listener: ConfigChangeListener): ConfigurationDesc = {
-    doLoad(name,namespace,group,Option(listener))
+    doLoad(name, namespace, group, Option(listener))
   }
 
   private[this] def doLoad(name: String, namespace: String, group: Option[String], listenerOpt: Option[ConfigChangeListener]): ConfigurationDesc = {
@@ -47,7 +47,7 @@ class ConsulConfigProvider extends ConfigProvider {
     }
     val version = config.get().getModifyIndex
     val payload = new String(BaseEncoding.base64().decode(config.get().getValue.get()), Charsets.UTF_8)
-    listenerOpt.foreach(listener => addListener(name, namespace, group, listener))
+    listenerOpt.foreach(listener ⇒ addListener(name, namespace, group, listener))
     ConfigurationDesc(name, payload, version, namespace, group)
   }
 

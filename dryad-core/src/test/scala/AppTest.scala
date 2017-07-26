@@ -66,6 +66,10 @@ class AppTest extends FunSuite {
 
 class MemoryProvider extends ConfigProvider {
 
+  override def load(name: String, namespace: String, group: Option[String]): ConfigurationDesc = {
+    load(name, namespace, group, null)
+  }
+
   override def load(name: String, namespace: String, group: Option[String], listener: ConfigChangeListener): ConfigurationDesc = {
     val thread = new Thread() {
       override def run(): Unit = {
