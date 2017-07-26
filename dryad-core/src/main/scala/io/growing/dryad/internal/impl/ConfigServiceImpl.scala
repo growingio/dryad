@@ -44,7 +44,7 @@ class ConfigServiceImpl(provider: ConfigProvider) extends ConfigService {
     })
   }
 
-  override def getAsString(name: String, namespace: String, group: Option[String]): String = {
+  override def getConfigAsString(name: String, namespace: String, group: Option[String]): String = {
     provider.load(name, namespace, group, (configuration: ConfigurationDesc) ⇒ ()).payload
   }
 

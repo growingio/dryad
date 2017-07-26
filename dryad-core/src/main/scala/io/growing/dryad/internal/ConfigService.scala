@@ -19,7 +19,7 @@ trait ConfigService {
 
   def get(name: String, namespace: String, group: Option[String]): Config
 
-  def getAsString(name: String, namespace: String, group: Option[String]): String
+  def getConfigAsString(name: String, namespace: String, group: Option[String]): String
 
 }
 

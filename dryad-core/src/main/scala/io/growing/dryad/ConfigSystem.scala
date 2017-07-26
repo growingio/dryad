@@ -59,7 +59,7 @@ private[this] class ConfigSystemImpl(config: Config) extends ConfigSystem {
   }
 
   override def getConfigAsString(name: String, ignoreGroup: Boolean): String = {
-    configServer.getAsString(name, namespace, if (ignoreGroup) None else Option(_group))
+    configServer.getConfigAsString(name, namespace, if (ignoreGroup) None else Option(_group))
   }
 
 }
