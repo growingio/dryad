@@ -19,9 +19,9 @@ trait ConfigSnapshot {
 }
 
 object LocalFileConfigSnapshot extends ConfigSnapshot {
-  val separator: String = FileSystems.getDefault.getSeparator
+  val fileSeparator: String = FileSystems.getDefault.getSeparator
   val workshop: String = {
-    val name = s"${System.getProperty("user.home")}$separator.dryad${separator}snapshots"
+    val name = s"${System.getProperty("user.home")}$fileSeparator.dryad${fileSeparator}snapshots"
     val path = Paths.get(name)
     if (!Files.exists(path)) {
       Files.createDirectories(path)
@@ -30,15 +30,15 @@ object LocalFileConfigSnapshot extends ConfigSnapshot {
   }
 
   override def flash(configuration: ConfigurationDesc): Unit = {
-    val (name, namespace) = (configuration.name, configuration.namespace)
-    val paths = configuration.group.fold(Seq(namespace, name))(group ⇒ Seq(namespace, group, name))
-    val dir = Paths.get(paths.filterNot(_.trim.isEmpty).mkString(separator))
+    val segments = configuration.path.split("/")
+    val name = segments.last
+    val dir = Paths.get(segments.dropRight(1).mkString(fileSeparator))
     if (!Files.exists(dir)) {
       Files.createDirectories(dir)
     }
-    val path = dir.resolve(s"${configuration.name}-${configuration.version}")
+    val path = dir.resolve(s"$name-${configuration.version}")
     if (!Files.exists(path)) {
-      Files.write(path, configuration.payload.getBytes(Charsets.UTF_8), StandardOpenOption.CREATE_NEW)
+      Files.write(path, configuration.payload.getBytes(Charsets.UTF_8), StandardOpenOption.CREATE)
     }
   }
 

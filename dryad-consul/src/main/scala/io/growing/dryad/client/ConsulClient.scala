@@ -34,11 +34,4 @@ object ConsulClient {
 
   lazy val catalogClient: CatalogClient = client.catalogClient()
 
-  def path(name: String, namespace: String, group: Option[String] = None): String = {
-    val paths = group.fold(Seq(namespace, name))(_group ⇒ Seq(namespace, _group, name))
-    paths.filterNot(_.trim.isEmpty).mkString("/")
-  }
-
-  def path(name: String, namespace: String, group: String): String = path(name, namespace, Option(group))
-
 }

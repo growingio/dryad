@@ -1,14 +1,14 @@
 import java.lang.reflect.Method
 import java.util.concurrent.atomic.AtomicReference
 
-import com.typesafe.config.{ Config, ConfigFactory }
+import com.typesafe.config.{Config, ConfigFactory}
 import configs.Configs
 import io.growing.dryad.internal.ConfigurationDesc
 import io.growing.dryad.parser.ConfigParser
 import io.growing.dryad.provider.ConfigProvider
 import io.growing.dryad.watcher.ConfigChangeListener
-import io.growing.dryad.{ ConfigSystem, annotation }
-import net.sf.cglib.proxy.{ Enhancer, MethodInterceptor, MethodProxy }
+import io.growing.dryad.{ConfigSystem, annotation}
+import net.sf.cglib.proxy.{Enhancer, MethodInterceptor, MethodProxy}
 import org.scalatest._
 
 class AppTest extends FunSuite {
@@ -66,36 +66,36 @@ class AppTest extends FunSuite {
 
 class MemoryProvider extends ConfigProvider {
 
-  override def load(name: String, namespace: String, group: Option[String]): ConfigurationDesc = {
-    load(name, namespace, group, null)
+  override def load(path: String): ConfigurationDesc = {
+    load(path, null)
   }
 
-  override def load(name: String, namespace: String, group: Option[String], listener: ConfigChangeListener): ConfigurationDesc = {
+  override def load(path: String, listener: ConfigChangeListener): ConfigurationDesc = {
     val thread = new Thread() {
       override def run(): Unit = {
         Thread.sleep(2000)
         listener.onChange(
           ConfigurationDesc(
-            name,
+            path,
             """
               age: 18
               name: Andy
               addr: {
                 city: Beijing
               }
-            """.stripMargin, 1, namespace, group))
+            """.stripMargin, 1))
       }
     }
     thread.start()
     ConfigurationDesc(
-      name,
+      path,
       """
         age: 18
         name: Andy
         addr: {
           city: Shanghai
         }
-      """.stripMargin, 0, namespace, group)
+      """.stripMargin, 0)
   }
 
 }

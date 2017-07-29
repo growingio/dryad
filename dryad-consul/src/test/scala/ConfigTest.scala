@@ -10,8 +10,9 @@ import org.scalatest._
     val configSystem = ConfigSystem()
     val group = configSystem.group
     val namespace = configSystem.namespace
+    val path = Seq(namespace, group, "application.conf").mkString("/")
     ConsulClient.kvClient.putValue(
-      ConsulClient.path("application.conf", namespace, group),
+      path,
       """
         {
           name: "Andy.Ai"
@@ -25,7 +26,7 @@ import org.scalatest._
     for (i ← 1 to 10) {
       val name = UUID.randomUUID().toString
       ConsulClient.kvClient.putValue(
-        ConsulClient.path("application.conf", namespace, group),
+        path,
         s"""
         {
           name: "$name"
@@ -34,20 +35,20 @@ import org.scalatest._
         """.stripMargin)
 
       Thread.sleep(20)
-
       assertResult(i)(config.age)
       assertResult(name)(config.name)
     }
 
-    ConsulClient.kvClient.deleteKey(ConsulClient.path("application.conf", namespace, group))
+    ConsulClient.kvClient.deleteKey(path)
   }
 
   test("Consul client2") {
     val configSystem = ConfigSystem()
     val group = configSystem.group
     val namespace = configSystem.namespace
+    val path = Seq(namespace, group, "application.conf").mkString("/")
     ConsulClient.kvClient.putValue(
-      ConsulClient.path("application.conf", namespace, group),
+      path,
       """
         {
           name: "Andy.Ai"
@@ -65,15 +66,15 @@ import org.scalatest._
       Thread.sleep(1000)
     }
 
-    ConsulClient.kvClient.deleteKey(ConsulClient.path("application.conf", namespace, group))
+    ConsulClient.kvClient.deleteKey(path)
   }
 
   test("Consul client3") {
     val configSystem = ConfigSystem()
-    val group = configSystem.group
     val namespace = configSystem.namespace
+    val path = Seq(namespace, "application.conf").mkString("/")
     ConsulClient.kvClient.putValue(
-      ConsulClient.path("application.conf", namespace),
+      path,
       """
         {
           name: "Andy.Ai"
@@ -87,7 +88,7 @@ import org.scalatest._
     for (i ← 1 to 10) {
       val name = UUID.randomUUID().toString
       ConsulClient.kvClient.putValue(
-        ConsulClient.path("application.conf", namespace),
+        path,
         s"""
         {
           name: "$name"
@@ -101,6 +102,6 @@ import org.scalatest._
       assertResult(name)(config.name)
     }
 
-    ConsulClient.kvClient.deleteKey(ConsulClient.path("application.conf", namespace))
+    ConsulClient.kvClient.deleteKey(path)
   }
 }

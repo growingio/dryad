@@ -7,4 +7,4 @@ package io.growing.dryad.internal
  *
  * @author Andy Ai
  */
-case class ConfigurationDesc(name: String, payload: String, version: Long, namespace: String, group: Option[String])
+case class ConfigurationDesc(path: String, payload: String, version: Long)

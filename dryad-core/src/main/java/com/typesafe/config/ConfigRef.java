@@ -157,13 +157,15 @@ public class ConfigRef implements Config {
     }
 
     @Override
+    @Deprecated
     public Long getMilliseconds(String path) {
-        return underlying.get().getMilliseconds(path);
+        throw new UnsupportedOperationException("Deprecated, replaced by getDuration(String, TimeUnit)");
     }
 
     @Override
+    @Deprecated
     public Long getNanoseconds(String path) {
-        return underlying.get().getNanoseconds(path);
+        throw new UnsupportedOperationException("Deprecated, replaced by getDuration(String, TimeUnit)");
     }
 
     @Override
@@ -242,13 +244,15 @@ public class ConfigRef implements Config {
     }
 
     @Override
+    @Deprecated
     public List<Long> getMillisecondsList(String path) {
-        return underlying.get().getMillisecondsList(path);
+        throw new UnsupportedOperationException("Deprecated, replaced by getDurationList(String, TimeUnit)");
     }
 
     @Override
+    @Deprecated
     public List<Long> getNanosecondsList(String path) {
-        return underlying.get().getNanosecondsList(path);
+        throw new UnsupportedOperationException("Deprecated, replaced by getDurationList(String, TimeUnit)");
     }
 
     @Override

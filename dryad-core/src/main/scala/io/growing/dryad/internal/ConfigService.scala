@@ -21,6 +21,8 @@ trait ConfigService {
 
   def getConfigAsString(name: String, namespace: String, group: Option[String]): String
 
+  def getConfigAsStringRecursive(name: String, namespace: String, group: String): String
+
 }
 
 object ConfigService {

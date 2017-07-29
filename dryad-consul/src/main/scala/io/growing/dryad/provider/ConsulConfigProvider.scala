@@ -31,33 +31,27 @@ class ConsulConfigProvider extends ConfigProvider {
   private[this] val watchers = CacheBuilder.newBuilder().build[String, Watcher]()
   private[this] val listeners = CacheBuilder.newBuilder().build[String, JList[ConfigChangeListener]]()
 
-  override def load(name: String, namespace: String, group: Option[String]): ConfigurationDesc = {
-    doLoad(name, namespace, group, None)
-  }
+  override def load(path: String): ConfigurationDesc = doLoad(path, None)
 
-  override def load(name: String, namespace: String, group: Option[String], listener: ConfigChangeListener): ConfigurationDesc = {
-    doLoad(name, namespace, group, Option(listener))
-  }
+  override def load(path: String, listener: ConfigChangeListener): ConfigurationDesc = doLoad(path, Option(listener))
 
-  private[this] def doLoad(name: String, namespace: String, group: Option[String], listenerOpt: Option[ConfigChangeListener]): ConfigurationDesc = {
-    val path = ConsulClient.path(name, namespace, group)
+  private[this] def doLoad(path: String, listenerOpt: Option[ConfigChangeListener]): ConfigurationDesc = {
     val config = ConsulClient.kvClient.getValue(path)
     if (!config.isPresent) {
       throw new ConfigurationNotFoundException(path)
     }
     val version = config.get().getModifyIndex
     val payload = new String(BaseEncoding.base64().decode(config.get().getValue.get()), Charsets.UTF_8)
-    listenerOpt.foreach(listener ⇒ addListener(name, namespace, group, listener))
-    ConfigurationDesc(name, payload, version, namespace, group)
+    listenerOpt.foreach(listener ⇒ addListener(path, listener))
+    ConfigurationDesc(path, payload, version)
   }
 
-  private[this] def addListener(name: String, namespace: String, group: Option[String], listener: ConfigChangeListener): Unit = {
-    listeners.get(name, () ⇒ new util.ArrayList[ConfigChangeListener]()).add(listener)
-    watchers.get(name, () ⇒ new Watcher(name, namespace, group))
+  private[this] def addListener(path: String, listener: ConfigChangeListener): Unit = {
+    listeners.get(path, () ⇒ new util.ArrayList[ConfigChangeListener]()).add(listener)
+    watchers.get(path, () ⇒ new Watcher(path))
   }
 
-  private[this] class Watcher(name: String, namespace: String, group: Option[String]) {
-    private[this] val path = ConsulClient.path(name, namespace, group)
+  private[this] class Watcher(path: String) {
     private[this] val callback: ConsulResponseCallback[Optional[Value]] = new ConsulResponseCallback[Optional[Value]]() {
       private[this] val index = new AtomicReference[BigInteger]
 
@@ -65,8 +59,8 @@ class ConsulConfigProvider extends ConfigProvider {
         if (consulResponse.getResponse.isPresent) {
           val value = consulResponse.getResponse.get()
           val payload = new String(BaseEncoding.base64().decode(value.getValue.get()), Charsets.UTF_8)
-          val configuration = ConfigurationDesc(name, payload, value.getModifyIndex, namespace, group)
-          listeners.getIfPresent(name).asScala.foreach { listener ⇒
+          val configuration = ConfigurationDesc(path, payload, value.getModifyIndex)
+          listeners.getIfPresent(path).asScala.foreach { listener ⇒
             listener.onChange(configuration)
           }
         }
@@ -82,7 +76,7 @@ class ConsulConfigProvider extends ConfigProvider {
         ConsulClient.kvClient.getValue(path, QueryOptions.blockMinutes(BLOCK_QUERY_MINS, index.get()).build(), this)
       }
     }
-    ConsulClient.kvClient.getValue(name, QueryOptions.blockMinutes(BLOCK_QUERY_MINS, new BigInteger("0")).build(), callback)
+    ConsulClient.kvClient.getValue(path, QueryOptions.blockMinutes(BLOCK_QUERY_MINS, new BigInteger("0")).build(), callback)
   }
 
 }

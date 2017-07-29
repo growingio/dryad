@@ -27,6 +27,8 @@ trait ConfigSystem {
 
   def getConfigAsString(name: String, ignoreGroup: Boolean = false): String
 
+  def getConfigAsStringRecursive(name: String): String
+
 }
 
 object ConfigSystem {
@@ -60,6 +62,10 @@ private[this] class ConfigSystemImpl(config: Config) extends ConfigSystem {
 
   override def getConfigAsString(name: String, ignoreGroup: Boolean): String = {
     configServer.getConfigAsString(name, namespace, if (ignoreGroup) None else Option(_group))
+  }
+
+  override def getConfigAsStringRecursive(name: String): String = {
+    configServer.getConfigAsStringRecursive(name, namespace, _group)
   }
 
 }
