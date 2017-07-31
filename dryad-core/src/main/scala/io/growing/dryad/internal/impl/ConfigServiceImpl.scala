@@ -55,9 +55,7 @@ class ConfigServiceImpl(provider: ConfigProvider) extends ConfigService {
   override def getConfigAsStringRecursive(name: String, namespace: String, group: String): String = {
     var result: Try[ConfigurationDesc] = null
     Seq(namespace, group, name).inits.exists {
-      case Nil ⇒
-        println("nil")
-        false
+      case Nil ⇒ false
       case segments ⇒
         result = Try(provider.load(segments.mkString(separator)))
         result.isSuccess
