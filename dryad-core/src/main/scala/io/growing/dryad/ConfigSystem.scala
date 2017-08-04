@@ -25,11 +25,11 @@ trait ConfigSystem {
 
   def get(name: String): Config
 
-  def getWithoutGroup(name: String): Config
+  def getIgnoreGroup(name: String): Config
 
   def getConfigAsString(name: String): String
 
-  def getConfigAsStringWithoutGroup(name: String): String
+  def getConfigAsStringIgnoreGroup(name: String): String
 
   def getConfigAsStringRecursive(name: String): String
 
@@ -62,13 +62,13 @@ private[this] class ConfigSystemImpl(config: Config) extends ConfigSystem {
 
   override def get(name: String): Config = configServer.get(name, _namespace, Option(_group))
 
-  override def getWithoutGroup(name: String): Config = configServer.get(name, _namespace, None)
+  override def getIgnoreGroup(name: String): Config = configServer.get(name, _namespace, None)
 
   override def getConfigAsString(name: String): String = {
     configServer.getConfigAsString(name, _namespace, Option(_group))
   }
 
-  override def getConfigAsStringWithoutGroup(name: String): String = {
+  override def getConfigAsStringIgnoreGroup(name: String): String = {
     configServer.getConfigAsString(name, _namespace, None)
   }
 
