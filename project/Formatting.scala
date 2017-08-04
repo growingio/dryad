@@ -20,7 +20,7 @@ object Formatting extends AutoPlugin {
       .setPreference(RewriteArrowSymbols, true)
       .setPreference(AlignParameters, true)
       .setPreference(AlignSingleLineCaseStatements, true)
-      .setPreference(DoubleIndentClassDeclaration, true)
+      .setPreference(DoubleIndentConstructorArguments, true)
   }
 
   def docFormattingPreferences: FormattingPreferences = {
@@ -29,6 +29,6 @@ object Formatting extends AutoPlugin {
       .setPreference(RewriteArrowSymbols, true)
       .setPreference(AlignParameters, true)
       .setPreference(AlignSingleLineCaseStatements, true)
-      .setPreference(DoubleIndentClassDeclaration, true)
+      .setPreference(DoubleIndentConstructorArguments, true)
   }
 }

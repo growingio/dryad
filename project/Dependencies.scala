@@ -3,11 +3,11 @@ import sbt._
 object Dependencies {
 
   object Versions {
-    val guava = "21.0"
+    val guava = "22.0"
     val cglib = "3.2.5"
     val jersey = "2.22.2"
     val config = "1.3.1"
-    val consul = "0.16.2"
+    val consul = "0.16.3"
     val configs = "0.4.4"
     val logging = "3.7.2"
     val scala211 = "2.11.11"
