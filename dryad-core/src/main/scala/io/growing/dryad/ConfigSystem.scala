@@ -23,9 +23,13 @@ trait ConfigSystem {
 
   def get[T: ClassTag]: T
 
-  def get(name: String, ignoreGroup: Boolean = false): Config
+  def get(name: String): Config
 
-  def getConfigAsString(name: String, ignoreGroup: Boolean = false): String
+  def getWithoutGroup(name: String): Config
+
+  def getConfigAsString(name: String): String
+
+  def getConfigAsStringWithoutGroup(name: String): String
 
   def getConfigAsStringRecursive(name: String): String
 
@@ -56,12 +60,16 @@ private[this] class ConfigSystemImpl(config: Config) extends ConfigSystem {
 
   override def get[T: ClassTag]: T = configServer.get[T](_namespace, _group)
 
-  override def get(name: String, ignoreGroup: Boolean = false): Config = {
-    configServer.get(name, _namespace, if (ignoreGroup) None else Option(_group))
+  override def get(name: String): Config = configServer.get(name, _namespace, Option(_group))
+
+  override def getWithoutGroup(name: String): Config = configServer.get(name, _namespace, None)
+
+  override def getConfigAsString(name: String): String = {
+    configServer.getConfigAsString(name, _namespace, Option(_group))
   }
 
-  override def getConfigAsString(name: String, ignoreGroup: Boolean): String = {
-    configServer.getConfigAsString(name, namespace, if (ignoreGroup) None else Option(_group))
+  override def getConfigAsStringWithoutGroup(name: String): String = {
+    configServer.getConfigAsString(name, _namespace, None)
   }
 
   override def getConfigAsStringRecursive(name: String): String = {

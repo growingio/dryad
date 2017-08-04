@@ -1,14 +1,14 @@
 import java.lang.reflect.Method
 import java.util.concurrent.atomic.AtomicReference
 
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.{ Config, ConfigFactory }
 import configs.Configs
 import io.growing.dryad.internal.ConfigurationDesc
 import io.growing.dryad.parser.ConfigParser
 import io.growing.dryad.provider.ConfigProvider
 import io.growing.dryad.watcher.ConfigChangeListener
-import io.growing.dryad.{ConfigSystem, annotation}
-import net.sf.cglib.proxy.{Enhancer, MethodInterceptor, MethodProxy}
+import io.growing.dryad.{ ConfigSystem, annotation }
+import net.sf.cglib.proxy.{ Enhancer, MethodInterceptor, MethodProxy }
 import org.scalatest._
 
 class AppTest extends FunSuite {
