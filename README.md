@@ -11,7 +11,7 @@ Dryad 是一个配置文件管理客户端，它提供了配置文件的热加�
 ### Consul
 
 ```
-"io.growing" %% "dryad-consul" % "1.0.0-SNAPSHOT"
+"io.growing" %% "dryad-consul" % $VERSION
 ```
 
 ## 使用
