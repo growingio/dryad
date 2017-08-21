@@ -104,4 +104,23 @@ import org.scalatest._
 
     ConsulClient.kvClient.deleteKey(path)
   }
+
+  test("Consul client4") {
+    val configSystem = ConfigSystem()
+    val namespace = configSystem.namespace
+    val path = Seq(namespace, "application.conf").mkString("/")
+    ConsulClient.kvClient.putValue(
+      path,
+      """
+        {
+          name: "Andy.Ai"
+          age: 18
+        }
+      """.stripMargin)
+
+    val configStr = configSystem.getConfigAsStringRecursive("a/b/c/d/application.conf")
+    assert(configStr.contains("Andy.Ai"))
+
+    ConsulClient.kvClient.deleteKey(path)
+  }
 }

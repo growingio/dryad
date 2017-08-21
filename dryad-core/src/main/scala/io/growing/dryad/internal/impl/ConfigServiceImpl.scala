@@ -52,12 +52,15 @@ class ConfigServiceImpl(provider: ConfigProvider) extends ConfigService {
     provider.load(getPath(name, namespace, group)).payload
   }
 
-  override def getConfigAsStringRecursive(name: String, namespace: String, group: String): String = {
+  override def getConfigAsStringRecursive(path: String, namespace: String, group: String): String = {
     var result: Try[ConfigurationDesc] = null
-    Seq(namespace, group, name).inits.exists {
+    val paths = path.split(separator)
+    val name = paths.last
+    (Seq(namespace, group) ++ paths.dropRight(1)).inits.exists {
       case Nil ⇒ false
       case segments ⇒
-        result = Try(provider.load(segments.mkString(separator)))
+        val configName = (segments :+ name).mkString(separator)
+        result = Try(provider.load(configName))
         result.isSuccess
     }
     result match {
@@ -108,4 +111,3 @@ class ConfigServiceImpl(provider: ConfigProvider) extends ConfigService {
   }
 
 }
-
