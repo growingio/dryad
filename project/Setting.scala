@@ -10,7 +10,7 @@ object Setting extends AutoPlugin {
     version := "1.0.4",
     organization := "io.growing",
     scalaVersion := Versions.scala212,
-    crossScalaVersions := Seq(Versions.scala211, Versions.scala212)
+    crossScalaVersions := Seq(Versions.scala212)
   )
 
 }

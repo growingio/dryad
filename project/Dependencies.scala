@@ -10,7 +10,6 @@ object Dependencies {
     val configs = "0.4.4"
     val logging = "3.7.2"
     val guava = "23.3-jre"
-    val scala211 = "2.11.11"
     val scala212 = "2.12.4"
     val scalaTest = "3.0.4"
   }
