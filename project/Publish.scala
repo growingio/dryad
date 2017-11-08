@@ -49,8 +49,8 @@ object DontPublish extends AutoPlugin {
 
   override def projectSettings: Seq[_root_.sbt.Def.Setting[_]] = Seq(
     publishArtifact := false,
-    publish := (),
-    publishLocal := ()
+    publish := Unit,
+    publishLocal := Unit
   )
 
 }

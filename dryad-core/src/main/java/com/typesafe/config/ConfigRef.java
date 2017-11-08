@@ -1,6 +1,8 @@
 package com.typesafe.config;
 
 import java.time.Duration;
+import java.time.Period;
+import java.time.temporal.TemporalAmount;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -288,5 +290,15 @@ public class ConfigRef implements Config {
     @Override
     public Config withValue(String path, ConfigValue value) {
         return underlying.get().withValue(path, value);
+    }
+
+    @Override
+    public Period getPeriod(String path) {
+        return underlying.get().getPeriod(path);
+    }
+
+    @Override
+    public TemporalAmount getTemporal(String path) {
+        return underlying.get().getTemporal(path);
     }
 }
