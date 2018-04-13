@@ -3,9 +3,9 @@ package io.growing.dryad.provider
 import java.math.BigInteger
 import java.util
 import java.util.concurrent.atomic.AtomicReference
-import java.util.{ List ⇒ JList }
+import java.util.{ Optional, List ⇒ JList }
 
-import com.google.common.base.{ Charsets, Optional }
+import com.google.common.base.Charsets
 import com.google.common.cache.CacheBuilder
 import com.google.common.io.BaseEncoding
 import com.orbitz.consul.async.ConsulResponseCallback
