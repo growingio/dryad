@@ -56,12 +56,23 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
       case HttpHealthCheck(url, interval, timeout) ⇒ Registration.RegCheck.http(url, interval, timeout)
       case c                                       ⇒ throw new UnsupportedOperationException(s"Unsupported check: ${c.getClass.getName}")
     }
-    val tags: Seq[String] = Seq(
+    val basicTags: Seq[String] = Seq(
       s"""type = "microservice"""",
       s"priority = ${service.priority}",
       s"""group = "${service.group}"""",
       s"""schema = "${service.schema}"""",
       s"""pattern = "${service.pattern}"""")
+    lazy val nonCertifications = if (service.nonCertifications.nonEmpty) {
+      Option(s"""non_certifications = "${service.nonCertifications.mkString(",")}"""")
+    } else {
+      None
+    }
+    val optionalTags = Seq(
+      nonCertifications,
+      service.rpcPort.map(port ⇒ s"rpc_port = $port")).collect {
+        case Some(tag) ⇒ tag
+      }
+    val tags = basicTags ++ optionalTags
     val registration = ImmutableRegistration.builder()
       .id(service.id)
       .name(service.name)
