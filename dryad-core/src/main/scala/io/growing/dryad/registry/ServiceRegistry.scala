@@ -13,6 +13,6 @@ trait ServiceRegistry {
 
   def register(service: Service): Unit
 
-  def deregister(serviceId: String): Unit
+  def deregister(service: Service): Unit
 
 }

@@ -8,7 +8,7 @@ import com.google.common.util.concurrent.{ AbstractScheduledService, ServiceMana
 import com.orbitz.consul.model.agent.{ ImmutableRegistration, Registration }
 import com.typesafe.scalalogging.LazyLogging
 import io.growing.dryad.client.ConsulClient
-import io.growing.dryad.registry.dto.Service
+import io.growing.dryad.registry.dto.{ Portal, Service }
 
 import scala.collection.JavaConverters._
 
@@ -20,22 +20,22 @@ import scala.collection.JavaConverters._
  * @author Andy Ai
  */
 class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
-  private[this] val ttlServices: JList[Service] = new JArrayList[Service]()
+  private[this] val ttlPortals: JList[Portal] = new JArrayList[Portal]()
   private val ttlCheckService: AbstractScheduledService = new AbstractScheduledService {
     private lazy val executorService = executor()
 
     override def runOneIteration(): Unit = {
-      ttlServices.asScala.foreach { service ⇒
-        executorService.execute(() ⇒ ConsulClient.agentClient.pass(service.id, s"pass in ${System.currentTimeMillis()}"))
+      ttlPortals.asScala.foreach { portal ⇒
+        executorService.execute(() ⇒ ConsulClient.agentClient.pass(portal.id, s"pass in ${System.currentTimeMillis()}"))
       }
     }
 
     override def scheduler(): Scheduler = Scheduler.newFixedRateSchedule(0, 1, TimeUnit.SECONDS)
 
     override def shutDown(): Unit = {
-      val fixedThreadPool = Executors.newFixedThreadPool(ttlServices.size())
-      ttlServices.asScala.foreach { service ⇒
-        fixedThreadPool.execute(() ⇒ ConsulClient.agentClient.fail(service.id, s"system shutdown in ${System.currentTimeMillis()}"))
+      val fixedThreadPool = Executors.newFixedThreadPool(ttlPortals.size())
+      ttlPortals.asScala.foreach { portal ⇒
+        fixedThreadPool.execute(() ⇒ ConsulClient.agentClient.fail(portal.id, s"system shutdown in ${System.currentTimeMillis()}"))
       }
       fixedThreadPool.shutdown()
       fixedThreadPool.awaitTermination(1, TimeUnit.MINUTES)
@@ -51,48 +51,53 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
   })
 
   override def register(service: Service): Unit = {
-    val check = service.check match {
-      case TTLHealthCheck(ttl)                     ⇒ Registration.RegCheck.ttl(ttl)
-      case HttpHealthCheck(url, interval, timeout) ⇒ Registration.RegCheck.http(url, interval, timeout)
-      case c                                       ⇒ throw new UnsupportedOperationException(s"Unsupported check: ${c.getClass.getName}")
-    }
-    val basicTags: Seq[String] = Seq(
-      s"""type = "microservice"""",
-      s"priority = ${service.priority}",
-      s"""group = "${service.group}"""",
-      s"""schema = "${service.schema}"""",
-      s"""pattern = "${service.pattern}"""")
-    lazy val nonCertifications = if (service.nonCertifications.nonEmpty) {
-      Option(s"""non_certifications = "${service.nonCertifications.mkString(",")}"""")
-    } else {
-      None
-    }
-    val optionalTags = Seq(
-      nonCertifications,
-      service.loadBalancing.map(lb ⇒ s"""load_balancing = "$lb"""")).collect {
-        case Some(tag) ⇒ tag
+    service.portals.foreach { portal ⇒
+      val check = portal.check match {
+        case TTLHealthCheck(ttl)                     ⇒ Registration.RegCheck.ttl(ttl)
+        case HttpHealthCheck(url, interval, timeout) ⇒ Registration.RegCheck.http(url, interval, timeout)
+        case GrpcHealthCheck(grpc, interval, useTls) ⇒ Registration.RegCheck.grpc(grpc, interval, useTls)
+        case c                                       ⇒ throw new UnsupportedOperationException(s"Unsupported check: ${c.getClass.getName}")
       }
-    val tags = basicTags ++ optionalTags
-    val registration = ImmutableRegistration.builder()
-      .id(service.id)
-      .name(service.name)
-      .address(service.address)
-      .port(service.port)
-      .addTags(tags: _*)
-      .enableTagOverride(false)
-      .check(check).build()
-    ConsulClient.agentClient.register(registration)
-    if (service.check.isInstanceOf[TTLHealthCheck]) {
-      ttlServices.add(service)
+      val basicTags: Seq[String] = Seq(
+        s"""type = "microservice"""",
+        s"priority = ${service.priority}",
+        s"""group = "${service.group}"""",
+        s"""schema = "${portal.schema}"""",
+        s"""pattern = "${portal.pattern}"""")
+      lazy val nonCertifications = if (portal.nonCertifications.nonEmpty) {
+        Option(s"""non_certifications = "${portal.nonCertifications.mkString(",")}"""")
+      } else {
+        None
+      }
+      val optionalTags = Seq(
+        nonCertifications,
+        service.loadBalancing.map(lb ⇒ s"""load_balancing = "$lb"""")).collect {
+          case Some(tag) ⇒ tag
+        }
+      val tags = basicTags ++ optionalTags
+      val registration = ImmutableRegistration.builder()
+        .id(portal.id)
+        .name(s"${service.name}-${portal.schema}")
+        .address(service.address)
+        .port(portal.port)
+        .addTags(tags: _*)
+        .enableTagOverride(false)
+        .check(check).build()
+      ConsulClient.agentClient.register(registration)
+      if (portal.check.isInstanceOf[TTLHealthCheck]) {
+        ttlPortals.add(portal)
+      }
     }
   }
 
-  override def deregister(serviceId: String): Unit = {
-    ttlServices.asScala.find(s ⇒ s.id == serviceId).foreach { s ⇒
-      ttlServices.remove(s)
-      ConsulClient.agentClient.fail(serviceId)
+  override def deregister(service: Service): Unit = {
+    service.portals.foreach { portal ⇒
+      ttlPortals.asScala.find(_.id == portal.id).foreach { s ⇒
+        ttlPortals.remove(s)
+        ConsulClient.agentClient.fail(portal.id)
+      }
+      ConsulClient.agentClient.deregister(portal.id)
     }
-    ConsulClient.agentClient.deregister(serviceId)
   }
 
 }

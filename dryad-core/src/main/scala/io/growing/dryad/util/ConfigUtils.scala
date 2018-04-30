@@ -25,6 +25,8 @@ object ConfigUtils {
 
     implicit def getConfigOpt(path: String): Option[Config] = getOpt(config.getConfig(path))
 
+    implicit def getBooleanOpt(path: String): Option[Boolean] = getOpt(config.getBoolean(path))
+
     implicit def getStringSeqOpt(path: String): Option[Seq[String]] = getOpt(config.getStringList(path).asScala)
 
     private[this] def getOpt[T](f: ⇒ T): Option[T] = {
