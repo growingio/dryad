@@ -29,7 +29,6 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
     val name = config.getString("dryad.namespace")
     val serviceConfig = config.getConfig("dryad.service")
     val port = serviceConfig.getInt("port")
-    val rpcPort = serviceConfig.getIntOpt("rpc.port")
     val priority = serviceConfig.getIntOpt("priority").getOrElse(0)
     val pattern = serviceConfig.getStringOpt("pattern").getOrElse("/*")
     val schema = serviceConfig.getStringOpt("schema").getOrElse("http")
@@ -38,7 +37,7 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
     val address = serviceConfig.getStringOpt("address").getOrElse(InetAddress.getLocalHost.getHostAddress)
     val id = Hashing.murmur3_128().hashString(address + s"-$port-$group", Charsets.UTF_8).toString
     val check = getCheck(serviceConfig, schema, address, port)
-    Service(id, name, schema, address, port, pattern, group, check, priority, loadBalancing, nonCertifications, rpcPort)
+    Service(id, name, schema, address, port, pattern, group, check, priority, loadBalancing, nonCertifications)
   }
 
   private[this] def getCheck(conf: Config, schema: String, address: String, port: Int): HealthCheck = {
