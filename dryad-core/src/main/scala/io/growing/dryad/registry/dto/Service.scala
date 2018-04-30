@@ -1,6 +1,7 @@
 package io.growing.dryad.registry.dto
 
 import io.growing.dryad.registry.HealthCheck
+import io.growing.dryad.registry.dto.LoadBalancing.LoadBalancing
 
 /**
  * Component:
@@ -11,4 +12,4 @@ import io.growing.dryad.registry.HealthCheck
  */
 final case class Service(id: String, name: String, schema: String, address: String,
                          port: Int, pattern: String, group: String, check: HealthCheck,
-                         priority: Int, nonCertifications: Seq[String], rpcPort: Option[Int])
+                         priority: Int, loadBalancing: Option[LoadBalancing], nonCertifications: Seq[String], rpcPort: Option[Int])

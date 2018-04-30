@@ -69,7 +69,8 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
     }
     val optionalTags = Seq(
       nonCertifications,
-      service.rpcPort.map(port ⇒ s"rpc_port = $port")).collect {
+      service.rpcPort.map(port ⇒ s"rpc_port = $port"),
+      service.loadBalancing.map(lb ⇒ s"""load_balancing = "$lb"""")).collect {
         case Some(tag) ⇒ tag
       }
     val tags = basicTags ++ optionalTags

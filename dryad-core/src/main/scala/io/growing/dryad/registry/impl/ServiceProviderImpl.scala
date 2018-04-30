@@ -5,7 +5,7 @@ import java.net.InetAddress
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.typesafe.config.Config
-import io.growing.dryad.registry.dto.Service
+import io.growing.dryad.registry.dto.{ LoadBalancing, Service }
 import io.growing.dryad.registry.{ HealthCheck, HttpHealthCheck, ServiceProvider, ServiceRegistry, TTLHealthCheck }
 import io.growing.dryad.util.ConfigUtils._
 
@@ -33,11 +33,12 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
     val priority = serviceConfig.getIntOpt("priority").getOrElse(0)
     val pattern = serviceConfig.getStringOpt("pattern").getOrElse("/*")
     val schema = serviceConfig.getStringOpt("schema").getOrElse("http")
+    val loadBalancing = serviceConfig.getStringOpt("load-balancing").map(lb ⇒ LoadBalancing.withName(lb))
     val nonCertifications = serviceConfig.getStringSeqOpt("non-certifications").map(_.distinct).getOrElse(Seq.empty)
     val address = serviceConfig.getStringOpt("address").getOrElse(InetAddress.getLocalHost.getHostAddress)
     val id = Hashing.murmur3_128().hashString(address + s"-$port-$group", Charsets.UTF_8).toString
     val check = getCheck(serviceConfig, schema, address, port)
-    Service(id, name, schema, address, port, pattern, group, check, priority, nonCertifications, rpcPort)
+    Service(id, name, schema, address, port, pattern, group, check, priority, loadBalancing, nonCertifications, rpcPort)
   }
 
   private[this] def getCheck(conf: Config, schema: String, address: String, port: Int): HealthCheck = {
