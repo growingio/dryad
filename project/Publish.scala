@@ -14,32 +14,30 @@ object Publish extends AutoPlugin {
       val nexus = "https://oss.sonatype.org/"
       if (isSnapshot.value) {
         Some("snapshots" at nexus + "content/repositories/snapshots")
-      }
-      else {
+      } else {
         Some("releases" at nexus + "service/local/staging/deploy/maven2")
       }
     },
     pomExtra :=
       <url>https://github.com/growingio/dryad</url>
-        <licenses>
-          <license>
-            <name>Apache License</name>
-            <url>http://www.apache.org/licenses/</url>
-            <distribution>repo</distribution>
-          </license>
-        </licenses>
-        <scm>
-          <url>git@github.com:growingio/dryad.git</url>
-          <connection>scm:git:git@github.com:growingio/dryad.git</connection>
-        </scm>
-        <developers>
-          <developer>
-            <id>yanbo.ai</id>
-            <name>Andy Ai</name>
-            <url>http://aiyanbo.github.io/</url>
-          </developer>
-        </developers>
-  )
+      <licenses>
+        <license>
+          <name>Apache License</name>
+          <url>http://www.apache.org/licenses/</url>
+          <distribution>repo</distribution>
+        </license>
+      </licenses>
+      <scm>
+        <url>git@github.com:growingio/dryad.git</url>
+        <connection>scm:git:git@github.com:growingio/dryad.git</connection>
+      </scm>
+      <developers>
+        <developer>
+          <id>yanbo.ai</id>
+          <name>Andy Ai</name>
+          <url>http://aiyanbo.github.io/</url>
+        </developer>
+      </developers>)
 
 }
 
@@ -50,7 +48,6 @@ object DontPublish extends AutoPlugin {
   override def projectSettings: Seq[_root_.sbt.Def.Setting[_]] = Seq(
     publishArtifact := false,
     publish := Unit,
-    publishLocal := Unit
-  )
+    publishLocal := Unit)
 
 }

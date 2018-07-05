@@ -1,0 +1,9 @@
+#!/bin/bash
+
+SCALAC_OPTIONS='Seq("-Ywarn-unused-import", "-Ywarn-unused:locals,privates")'
+echo 'addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.5.10")' > project/scalafix.sbt
+sbt ";++ 2.12.4;\
+    set core / scalacOptions ++= $SCALAC_OPTIONS;\
+    set consul / scalacOptions ++= $SCALAC_OPTIONS;scalafix"
+rm -rf project/scalafix.sbt
+sbt scalastyle

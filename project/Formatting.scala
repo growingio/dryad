@@ -11,8 +11,7 @@ object Formatting extends AutoPlugin {
     ScalariformKeys.autoformat in Compile := true,
     ScalariformKeys.autoformat in Test := true,
     ScalariformKeys.preferences in Compile := formattingPreferences,
-    ScalariformKeys.preferences in Test := formattingPreferences
-  )
+    ScalariformKeys.preferences in Test := formattingPreferences)
 
   def formattingPreferences: FormattingPreferences = {
     import scalariform.formatter.preferences._

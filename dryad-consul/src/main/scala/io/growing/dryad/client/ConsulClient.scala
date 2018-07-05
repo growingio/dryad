@@ -22,16 +22,16 @@ object ConsulClient {
     case Success(timeout) ⇒ timeout
     case Failure(_)       ⇒ defaultConnectTimeout
   }
-  private[this] lazy val client = {
+  @volatile private[this] lazy val client = {
     Consul.builder().withHostAndPort(HostAndPort.fromParts(host, port))
       .withConnectTimeoutMillis(connectTimeout)
       .build()
   }
 
-  lazy val kvClient: KeyValueClient = client.keyValueClient()
+  @volatile lazy val kvClient: KeyValueClient = client.keyValueClient()
 
-  lazy val agentClient: AgentClient = client.agentClient()
+  @volatile lazy val agentClient: AgentClient = client.agentClient()
 
-  lazy val catalogClient: CatalogClient = client.catalogClient()
+  @volatile lazy val catalogClient: CatalogClient = client.catalogClient()
 
 }

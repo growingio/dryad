@@ -11,7 +11,7 @@ import io.growing.dryad.parser.ConfigParser
  * @author Andy Ai
  */
 @Configuration(name = "application.conf", parser = classOf[ApplicationConfigParser])
-case class ApplicationConfig(name: String, age: Int, cars: Option[Seq[String]])
+final case class ApplicationConfig(name: String, age: Int, cars: Option[Seq[String]])
 
 class ApplicationConfigParser extends ConfigParser[ApplicationConfig] {
   override def parse(config: Config): ApplicationConfig = Configs[ApplicationConfig].extract(config).value

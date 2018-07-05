@@ -9,8 +9,8 @@ package io.growing.dryad.registry
  */
 sealed trait HealthCheck
 
-case class TTLHealthCheck(ttl: Long) extends HealthCheck
+final case class TTLHealthCheck(ttl: Long) extends HealthCheck
 
-case class HttpHealthCheck(url: String, interval: Long, timeout: Long) extends HealthCheck
+final case class HttpHealthCheck(url: String, interval: Long, timeout: Long) extends HealthCheck
 
-case class GrpcHealthCheck(grpc: String, interval: Long, useTls: Boolean) extends HealthCheck
+final case class GrpcHealthCheck(grpc: String, interval: Long, useTls: Boolean) extends HealthCheck

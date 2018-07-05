@@ -1,7 +1,7 @@
 import Dependencies.Versions
 import org.jmotor.sbt.plugin.DependencyUpdatesPlugin.autoImport._
 import sbt.Keys._
-import sbt.{AutoPlugin, PluginTrigger}
+import sbt.{ AutoPlugin, PluginTrigger }
 
 object Setting extends AutoPlugin {
 
@@ -12,8 +12,6 @@ object Setting extends AutoPlugin {
     organization := "io.growing",
     scalaVersion := Versions.scala,
     dependencyUpgradeModuleNames := Map(
-      "scala-library" -> "scala"
-    )
-  )
+      "scala-library" -> "scala"))
 
 }

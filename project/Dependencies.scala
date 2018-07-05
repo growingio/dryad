@@ -7,11 +7,11 @@ object Dependencies {
     val scala = "2.12.6"
     val jersey = "2.22.2"
     val configs = "0.4.4"
-    val guava = "25.0-jre"
+    val guava = "25.1-jre"
     val scalatest = "3.0.5"
-    val cglibNodep = "3.2.6"
+    val cglibNodep = "3.2.7"
     val scalaLogging = "3.9.0"
-    val consulClient = "1.1.2"
+    val consulClient = "1.2.1"
   }
 
   object Compile {

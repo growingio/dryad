@@ -104,10 +104,10 @@ class DefConfigParser extends ConfigParser[DevConfig] {
   override def parse(config: Config): DevConfig = Configs[DevConfig].extract(config).value
 }
 
-case class Addr(city: String)
+final case class Addr(city: String)
 
 @annotation.Configuration(name = "application.conf", parser = classOf[DefConfigParser])
-case class DevConfig(age: Int, name: String, addr: Addr)
+final case class DevConfig(age: Int, name: String, addr: Addr)
 
 class Ref(val reference: AtomicReference[AnyRef]) extends MethodInterceptor {
 

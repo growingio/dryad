@@ -20,12 +20,12 @@ import scala.concurrent.duration._
  * @author Andy Ai
  */
 class ServiceProviderImpl(config: Config) extends ServiceProvider {
-  private[this] lazy val registry: ServiceRegistry = {
+  @volatile private[this] lazy val registry: ServiceRegistry = {
     val registryName = config.getString("dryad.registry")
     Class.forName(registryName).newInstance().asInstanceOf[ServiceRegistry]
   }
 
-  private[impl] lazy val service: Service = {
+  @volatile private[impl] lazy val service: Service = {
     val group = config.getString("dryad.group")
     val name = config.getString("dryad.namespace")
     val serviceConfig = config.getConfig("dryad.service")
@@ -50,7 +50,7 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
       case None ⇒ TTLHealthCheck(10.seconds.toSeconds)
       case Some(checkConfig) ⇒
         val ttl = checkConfig.getLongOpt("ttl").map(ttl ⇒ TTLHealthCheck(ttl))
-        lazy val interval = checkConfig.getLongOpt("interval").getOrElse(10.seconds.toSeconds)
+        @volatile lazy val interval = checkConfig.getLongOpt("interval").getOrElse(10.seconds.toSeconds)
         val http = checkConfig.getStringOpt("url").map { url ⇒
           val _url = if (url.startsWith("/")) s"$schema://$address:$port$url" else url
           val timeout = checkConfig.getLongOpt("timeout").getOrElse(5.seconds.toSeconds)

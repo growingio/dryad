@@ -22,7 +22,7 @@ import scala.collection.JavaConverters._
 class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
   private[this] val ttlPortals: JList[Portal] = new JArrayList[Portal]()
   private val ttlCheckService: AbstractScheduledService = new AbstractScheduledService {
-    private lazy val executorService = executor()
+    @volatile private lazy val executorService = executor()
 
     override def runOneIteration(): Unit = {
       ttlPortals.asScala.foreach { portal ⇒
@@ -64,7 +64,7 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
         s"""group = "${service.group}"""",
         s"""schema = "${portal.schema}"""",
         s"""pattern = "${portal.pattern}"""")
-      lazy val nonCertifications = if (portal.nonCertifications.nonEmpty) {
+      @volatile lazy val nonCertifications = if (portal.nonCertifications.nonEmpty) {
         Option(s"""non_certifications = "${portal.nonCertifications.mkString(",")}"""")
       } else {
         None
