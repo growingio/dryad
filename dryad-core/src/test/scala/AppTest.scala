@@ -107,7 +107,7 @@ class DefConfigParser extends ConfigParser[DevConfig] {
 final case class Addr(city: String)
 
 @annotation.Configuration(name = "application.conf", parser = classOf[DefConfigParser])
-final case class DevConfig(age: Int, name: String, addr: Addr)
+case class DevConfig(age: Int, name: String, addr: Addr)
 
 class Ref(val reference: AtomicReference[AnyRef]) extends MethodInterceptor {
 
