@@ -3,6 +3,7 @@ package io.growing.dryad.util
 import com.typesafe.config.Config
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration._
 import scala.language.implicitConversions
 import scala.util.{ Failure, Success, Try }
 
@@ -26,6 +27,8 @@ object ConfigUtils {
     implicit def getConfigOpt(path: String): Option[Config] = getOpt(config.getConfig(path))
 
     implicit def getBooleanOpt(path: String): Option[Boolean] = getOpt(config.getBoolean(path))
+
+    implicit def getDurationOpt(path: String): Option[Duration] = getOpt(config.getDuration(path)).map(_.toMillis.milliseconds)
 
     implicit def getStringSeqOpt(path: String): Option[Seq[String]] = getOpt(config.getStringList(path).asScala)
 

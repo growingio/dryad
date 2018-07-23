@@ -1,7 +1,7 @@
-package io.growing.dryad.client
+package io.growing.dryad.consul.client
 
 import com.google.common.net.HostAndPort
-import com.orbitz.consul.{ AgentClient, CatalogClient, Consul, KeyValueClient }
+import com.orbitz.consul.{ AgentClient, CatalogClient, Consul, HealthClient, KeyValueClient }
 import com.typesafe.config.{ Config, ConfigFactory }
 
 import scala.util.{ Failure, Success, Try }
@@ -33,5 +33,7 @@ object ConsulClient {
   @volatile lazy val agentClient: AgentClient = client.agentClient()
 
   @volatile lazy val catalogClient: CatalogClient = client.catalogClient()
+
+  @volatile lazy val healthClient: HealthClient = client.healthClient()
 
 }

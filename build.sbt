@@ -10,3 +10,8 @@ lazy val consul = Project(id = "dryad-consul", base = file("dryad-consul"))
   .enablePlugins(Publish)
   .enablePlugins(Setting)
   .dependsOn(core)
+
+lazy val cluster = Project(id = "dryad-cluster", base = file("dryad-cluster"))
+  .enablePlugins(Publish)
+  .enablePlugins(Setting)
+  .dependsOn(consul)

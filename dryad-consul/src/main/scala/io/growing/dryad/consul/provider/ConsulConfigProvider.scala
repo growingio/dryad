@@ -1,4 +1,4 @@
-package io.growing.dryad.provider
+package io.growing.dryad.consul.provider
 
 import java.math.BigInteger
 import java.util
@@ -12,9 +12,10 @@ import com.orbitz.consul.async.ConsulResponseCallback
 import com.orbitz.consul.model.ConsulResponse
 import com.orbitz.consul.model.kv.Value
 import com.orbitz.consul.option.QueryOptions
-import io.growing.dryad.client.ConsulClient
+import io.growing.dryad.consul.client.ConsulClient
 import io.growing.dryad.exception.ConfigurationNotFoundException
 import io.growing.dryad.internal.ConfigurationDesc
+import io.growing.dryad.provider.ConfigProvider
 import io.growing.dryad.watcher.ConfigChangeListener
 
 import scala.collection.JavaConverters._
@@ -56,6 +57,8 @@ class ConsulConfigProvider extends ConfigProvider {
       private[this] val index = new AtomicReference[BigInteger]
 
       override def onComplete(consulResponse: ConsulResponse[Optional[Value]]): Unit = {
+        index.set(consulResponse.getIndex)
+        watch()
         if (consulResponse.getResponse.isPresent) {
           val value = consulResponse.getResponse.get()
           val payload = new String(BaseEncoding.base64().decode(value.getValue.get()), Charsets.UTF_8)
@@ -64,8 +67,6 @@ class ConsulConfigProvider extends ConfigProvider {
             listener.onChange(configuration)
           }
         }
-        index.set(consulResponse.getIndex)
-        watch()
       }
 
       override def onFailure(throwable: Throwable): Unit = {

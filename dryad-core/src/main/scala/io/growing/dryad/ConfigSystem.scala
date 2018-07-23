@@ -77,4 +77,3 @@ private[this] class ConfigSystemImpl(config: Config) extends ConfigSystem {
   }
 
 }
-

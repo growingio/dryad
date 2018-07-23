@@ -1,14 +1,17 @@
-import io.growing.dryad.registry.ServiceProvider
+import io.growing.dryad.ServiceProvider
 import org.scalatest._
 
-@Ignore class ServiceTest extends FunSuite {
+@Ignore
+class ServiceTest extends FunSuite {
+
+  private val provider = ServiceProvider()
 
   test("Register service") {
-    ServiceProvider().online()
+    provider.register()
   }
 
   test("Deregister service") {
-    ServiceProvider().offline()
+    provider.deregister()
   }
 
 }

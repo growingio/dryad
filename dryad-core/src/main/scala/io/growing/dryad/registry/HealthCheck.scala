@@ -1,5 +1,7 @@
 package io.growing.dryad.registry
 
+import scala.concurrent.duration.Duration
+
 /**
  * Component:
  * Description:
@@ -7,10 +9,14 @@ package io.growing.dryad.registry
  *
  * @author Andy Ai
  */
-sealed trait HealthCheck
+sealed trait HealthCheck {
+  val deregisterCriticalServiceAfter: Duration
+}
 
-final case class TTLHealthCheck(ttl: Long) extends HealthCheck
+final case class TTLHealthCheck(ttl: Duration, deregisterCriticalServiceAfter: Duration) extends HealthCheck
 
-final case class HttpHealthCheck(url: String, interval: Long, timeout: Long) extends HealthCheck
+final case class HttpHealthCheck(url: String, interval: Duration,
+                                 timeout: Duration, deregisterCriticalServiceAfter: Duration) extends HealthCheck
 
-final case class GrpcHealthCheck(grpc: String, interval: Long, useTls: Boolean) extends HealthCheck
+final case class GrpcHealthCheck(grpc: String, interval: Duration,
+                                 useTls: Boolean, deregisterCriticalServiceAfter: Duration) extends HealthCheck

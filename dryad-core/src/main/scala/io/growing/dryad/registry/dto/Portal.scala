@@ -1,5 +1,6 @@
 package io.growing.dryad.registry.dto
 
+import io.growing.dryad.portal.Schema.Schema
 import io.growing.dryad.registry.HealthCheck
 
 /**
@@ -9,4 +10,4 @@ import io.growing.dryad.registry.HealthCheck
  *
  * @author AI
  */
-final case class Portal(id: String, schema: String, port: Int, pattern: String, check: HealthCheck, nonCertifications: Seq[String])
+final case class Portal(id: String, schema: Schema, port: Int, pattern: String, check: HealthCheck, nonCertifications: Seq[String])

@@ -14,7 +14,7 @@ object Dependencies {
     val consulClient = "1.2.1"
   }
 
-  object Compile {
+  object Compiles {
     val config: ModuleID = "com.typesafe" % "config" % Versions.config
     val cglib: ModuleID = "cglib" % "cglib-nodep" % Versions.cglibNodep
     val guava: ModuleID = "com.google.guava" % "guava" % Versions.guava
@@ -23,13 +23,16 @@ object Dependencies {
     val logging: ModuleID = "com.typesafe.scala-logging" %% "scala-logging" % Versions.scalaLogging
   }
 
-  object Test {
-    val scalaTest: ModuleID = "org.scalatest" %% "scalatest" % Versions.scalatest % "test"
+  object Tests {
+    val scalaTest: ModuleID = "org.scalatest" %% "scalatest" % Versions.scalatest % Test
   }
 
-  import Dependencies.Compile._
+  import Dependencies.Compiles._
 
-  val dryadCore: Seq[ModuleID] = Seq(configs, cglib, logging, config, guava, Test.scalaTest)
+  val dryadCore: Seq[ModuleID] = Seq(configs, cglib, logging, config, guava, Tests.scalaTest)
 
-  val dryadConsul: Seq[ModuleID] = Seq(consul, Test.scalaTest)
+  val dryadConsul: Seq[ModuleID] = Seq(consul, Tests.scalaTest)
+
+  val dryadCluster: Seq[ModuleID] = Seq(Tests.scalaTest)
+
 }

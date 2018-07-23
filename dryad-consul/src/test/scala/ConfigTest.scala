@@ -1,7 +1,7 @@
 import java.util.UUID
 
 import io.growing.dryad.ConfigSystem
-import io.growing.dryad.client.ConsulClient
+import io.growing.dryad.consul.client.ConsulClient
 import org.scalatest._
 
 @Ignore class ConfigTest extends FunSuite {
