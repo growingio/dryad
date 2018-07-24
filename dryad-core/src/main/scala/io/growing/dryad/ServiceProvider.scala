@@ -121,7 +121,7 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
   }
 
   private[dryad] def getCheck(name: String, conf: Config, schema: String, address: String, port: Int): HealthCheck = {
-    val factor = 3
+    val factor = 10
     conf.getConfigOpt("check") match {
       case None ⇒
         val ttl = 10.seconds
