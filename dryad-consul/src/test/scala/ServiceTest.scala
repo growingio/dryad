@@ -1,7 +1,7 @@
 import io.growing.dryad.ServiceProvider
 import org.scalatest._
 
-@Ignore
+//@Ignore
 class ServiceTest extends FunSuite {
 
   private val provider = ServiceProvider()

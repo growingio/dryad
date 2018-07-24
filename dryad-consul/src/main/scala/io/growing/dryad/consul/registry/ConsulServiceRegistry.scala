@@ -130,6 +130,7 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
           .interval(formatSeconds(httpCheck.interval)).timeout(formatSeconds(httpCheck.timeout))
       case grpcCheck: GrpcHealthCheck ⇒
         ImmutableRegCheck.builder.grpc(grpcCheck.grpc).grpcUseTls(grpcCheck.useTls)
+          .tlsSkipVerify(!grpcCheck.useTls)
           .interval(formatSeconds(grpcCheck.interval))
       case c ⇒ throw new UnsupportedOperationException(s"Unsupported check: ${c.getClass.getName}")
     }

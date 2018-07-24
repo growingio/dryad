@@ -45,6 +45,7 @@ object ServiceProvider {
 }
 
 class ServiceProviderImpl(config: Config) extends ServiceProvider {
+  private[this] lazy val groupConfigPath = "dryad.group"
   private[this] var service: Service = _
   @volatile private[this] lazy val registry: ServiceRegistry = {
     val registryName = config.getString("dryad.registry")
@@ -67,12 +68,12 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
   }
 
   override def subscribe(schema: Schema, serviceName: String, listener: ServiceInstanceListener): Unit = {
-    val group = config.getString("dryad.group")
+    val group = config.getString(groupConfigPath)
     registry.subscribe(Seq("_global_", group), schema, serviceName, listener)
   }
 
   override def getInstances(schema: Schema, serviceName: String, listener: Option[ServiceInstanceListener]): Seq[ServiceInstance] = {
-    val group = config.getString("dryad.group")
+    val group = config.getString(groupConfigPath)
     registry.getInstances(Seq("_global_", group), schema, serviceName, listener)
   }
 
@@ -98,7 +99,7 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
   }
 
   private[dryad] def buildService(patterns: Seq[(Schema, Seq[String])]): Service = {
-    val group = config.getString("dryad.group")
+    val group = config.getString(groupConfigPath)
     val name = config.getString("dryad.namespace")
     val serviceConfig = config.getConfig("dryad.service")
     val address = serviceConfig.getStringOpt("address").getOrElse(InetAddress.getLocalHost.getHostAddress)
@@ -112,14 +113,14 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
       }.fold(portalConfig.getStringOpt("pattern").getOrElse("/*"))(identity)
       val nonCertifications = portalConfig.getStringSeqOpt("non-certifications").map(_.distinct).getOrElse(Seq.empty)
       val id = Hashing.murmur3_128().hashString(address + s"-$port-$group", Charsets.UTF_8).toString
-      Portal(id, Schema.withName(schema), port, pattern, getCheck(portalConfig, schema, address, port), nonCertifications)
+      Portal(id, Schema.withName(schema), port, pattern, getCheck(name, portalConfig, schema, address, port), nonCertifications)
     }.toSet
     val priority = serviceConfig.getIntOpt("priority").getOrElse(0)
     val loadBalancing = serviceConfig.getStringOpt("load-balancing").map(lb ⇒ LoadBalancing.withName(lb))
     Service(name, address, group, portals, priority, loadBalancing)
   }
 
-  private[dryad] def getCheck(conf: Config, schema: String, address: String, port: Int): HealthCheck = {
+  private[dryad] def getCheck(name: String, conf: Config, schema: String, address: String, port: Int): HealthCheck = {
     val factor = 3
     conf.getConfigOpt("check") match {
       case None ⇒
@@ -140,7 +141,7 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
         }
         val grpc = checkConfig.getBooleanOpt("grpc-use-tls").map { useTls ⇒
           val deregisterCriticalServiceAfter = deregisterCriticalServiceAfterOpt.getOrElse(interval.*(factor))
-          GrpcHealthCheck(s"$address:$port", interval, useTls, deregisterCriticalServiceAfter)
+          GrpcHealthCheck(s"$address:$port/$name", interval, useTls, deregisterCriticalServiceAfter)
         }
         (ttl orElse http orElse grpc).get
     }
