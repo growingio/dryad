@@ -4,7 +4,7 @@ import io.growing.dryad.ConfigSystem
 import io.growing.dryad.consul.client.ConsulClient
 import org.scalatest._
 
-@Ignore class ConfigTest extends FunSuite {
+class ConfigTest extends FunSuite {
 
   test("Consul client") {
     val configSystem = ConfigSystem()
@@ -58,14 +58,6 @@ import org.scalatest._
     val config = configSystem.get[ApplicationConfig]
     assertResult(18)(config.age)
     assertResult("Andy.Ai")(config.name)
-
-    Thread.sleep(10000)
-
-    for (i ← 1 to 100000000) {
-      println(s"name: ${config.name}, age: ${config.age}")
-      Thread.sleep(1000)
-    }
-
     ConsulClient.kvClient.deleteKey(path)
   }
 
