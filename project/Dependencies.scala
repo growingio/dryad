@@ -4,14 +4,14 @@ object Dependencies {
 
   object Versions {
     val config = "1.3.3"
-    val scala = "2.12.6"
+    val scala = "2.12.7"
     val jersey = "2.22.2"
     val configs = "0.4.4"
-    val guava = "25.1-jre"
+    val guava = "26.0-jre"
     val scalatest = "3.0.5"
-    val cglibNodep = "3.2.7"
+    val cglibNodep = "3.2.8"
     val scalaLogging = "3.9.0"
-    val consulClient = "1.2.1"
+    val consulClient = "1.2.5"
   }
 
   object Compiles {

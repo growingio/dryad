@@ -68,19 +68,23 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
 
   override def register(service: Service): Unit = {
     service.portals.foreach { portal ⇒
-      val metas = Map(
-        "priority" -> String.valueOf(service.priority),
-        "group" -> service.group,
-        "schema" -> portal.schema.toString,
-        "pattern" -> portal.pattern)
-      val optionalEntities = Seq(
-        portal.nonCertifications match {
-          case Nil    ⇒ None
-          case values ⇒ Option("non_certifications" -> values.mkString(","))
-        },
-        service.loadBalancing.map(lb ⇒ "load_balancing" -> lb.toString)).collect {
-          case Some(entity) ⇒ entity
-        }.toMap
+      val basicTags: Seq[String] = Seq(
+        s"""type = "microservice"""",
+        s"priority = ${service.priority}",
+        s"""group = "${service.group}"""",
+        s"""schema = "${portal.schema}"""",
+        s"""pattern = "${portal.pattern}"""")
+      lazy val nonCertifications = if (portal.nonCertifications.nonEmpty) {
+        Option(s"""non_certifications = "${portal.nonCertifications.mkString(",")}"""")
+      } else {
+        None
+      }
+      val optionalTags = Seq(
+        nonCertifications,
+        service.loadBalancing.map(lb ⇒ s"""load_balancing = "$lb"""")).collect {
+          case Some(tag) ⇒ tag
+        }
+      val tags = basicTags ++ optionalTags
       val name = getServiceName(portal.schema, service.name)
       val check = buildCheck(portal)
       val registration = ImmutableRegistration.builder()
@@ -89,8 +93,8 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
         .address(service.address)
         .port(portal.port)
         .enableTagOverride(true)
-        .tags(Seq("microservice", portal.schema.toString, service.group).asJava)
-        .check(check).meta((metas ++ optionalEntities).asJava).build()
+        .addTags(tags: _*)
+        .check(check).build()
       ConsulClient.agentClient.register(registration)
       if (portal.check.isInstanceOf[TTLHealthCheck]) {
         ttlPortals.add(portal)
