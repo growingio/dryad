@@ -110,7 +110,7 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
       val port = portalConfig.getInt("port")
       val pattern = patterns.collectFirst {
         case (s, ps) if Schema.withName(schema.toLowerCase) == s ⇒ ps.mkString(",")
-      }.fold(portalConfig.getStringOpt("pattern").getOrElse("/*"))(identity)
+      }.fold(portalConfig.getStringOpt("pattern").getOrElse("/.*"))(identity)
       val nonCertifications = portalConfig.getStringSeqOpt("non-certifications").map(_.distinct).getOrElse(Seq.empty)
       val id = Hashing.murmur3_128().hashString(address + s"-$port-$group", Charsets.UTF_8).toString
       Portal(id, Schema.withName(schema), port, pattern, getCheck(name, portalConfig, schema, address, port), nonCertifications)
