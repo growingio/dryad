@@ -8,7 +8,6 @@ object Setting extends AutoPlugin {
   override def trigger: PluginTrigger = allRequirements
 
   override def projectSettings: Seq[_root_.sbt.Def.Setting[_]] = Seq(
-    version := "1.0.5-SNAPSHOT",
     organization := "io.growing",
     scalaVersion := Versions.scala,
     dependencyUpgradeModuleNames := Map(

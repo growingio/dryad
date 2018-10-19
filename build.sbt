@@ -1,3 +1,5 @@
+import ReleaseTransformations._
+
 name := "dryad"
 
 enablePlugins(DontPublish, Setting)
@@ -15,3 +17,19 @@ lazy val cluster = Project(id = "dryad-cluster", base = file("dryad-cluster"))
   .enablePlugins(Publish)
   .enablePlugins(Setting)
   .dependsOn(core)
+
+releasePublishArtifactsAction := PgpKeys.publishSigned.value
+
+releaseProcess := Seq[ReleaseStep](
+  checkSnapshotDependencies,
+  inquireVersions,
+  runClean,
+  runTest,
+  setReleaseVersion,
+  commitReleaseVersion,
+  tagRelease,
+  publishArtifacts,
+  setNextVersion,
+  commitNextVersion,
+  pushChanges
+)
