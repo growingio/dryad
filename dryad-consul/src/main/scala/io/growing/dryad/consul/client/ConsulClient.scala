@@ -22,10 +22,16 @@ object ConsulClient {
     case Success(timeout) ⇒ timeout
     case Failure(_)       ⇒ defaultConnectTimeout
   }
+  private[this] val username: Option[String] = Try(config.getString("dryad.consul.username")).toOption
+  private[this] val password: Option[String] = Try(config.getString("dryad.consul.password")).toOption
+
   @volatile private[this] lazy val client = {
-    Consul.builder().withHostAndPort(HostAndPort.fromParts(host, port))
+    val builder = Consul.builder().withHostAndPort(HostAndPort.fromParts(host, port))
       .withConnectTimeoutMillis(connectTimeout)
-      .build()
+    username.foreach { value ⇒
+      builder.withBasicAuth(value, password.getOrElse(""))
+    }
+    builder.build()
   }
 
   @volatile lazy val kvClient: KeyValueClient = client.keyValueClient()

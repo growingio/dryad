@@ -9,7 +9,7 @@ object Dependencies {
     val configs = "0.4.4"
     val guava = "27.0-jre"
     val scalatest = "3.0.5"
-    val cglibNodep = "3.2.8"
+    val cglibNodep = "3.2.9"
     val scalaLogging = "3.9.0"
     val consulClient = "1.2.6"
   }
