@@ -1,5 +1,6 @@
 package io.growing.dryad.internal.impl
 
+import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicReference
 
 import com.google.common.cache.CacheBuilder
@@ -9,6 +10,7 @@ import io.growing.dryad.internal.{ ConfigService, ConfigurationDesc }
 import io.growing.dryad.parser.ConfigParser
 import io.growing.dryad.provider.ConfigProvider
 import io.growing.dryad.snapshot.LocalFileConfigSnapshot
+import io.growing.dryad.watcher.ConfigChangeListener
 import net.sf.cglib.proxy.Enhancer
 
 import scala.reflect.ClassTag
@@ -29,22 +31,28 @@ class ConfigServiceImpl(provider: ConfigProvider) extends ConfigService {
 
   override def get[T: ClassTag](namespace: String, group: String): T = {
     val clazz = implicitly[ClassTag[T]].runtimeClass
-    objects.get(clazz.getName, () ⇒ createObjectRef(clazz, namespace, group)).asInstanceOf[T]
+    objects.get(clazz.getName, new Callable[AnyRef] {
+      override def call(): AnyRef = createObjectRef(clazz, namespace, group)
+    }).asInstanceOf[T]
   }
 
   override def get(name: String, namespace: String, group: Option[String]): Config = {
     val path = getPath(name, namespace, group)
-    configs.get(path, () ⇒ {
-      val refreshAndFlush = (configuration: ConfigurationDesc, ref: AtomicReference[Config]) ⇒ {
-        ref.set(ConfigFactory.parseString(configuration.payload))
-        LocalFileConfigSnapshot.flash(configuration)
+    configs.get(path, new Callable[Config] {
+      override def call(): Config = {
+        val refreshAndFlush = (configuration: ConfigurationDesc, ref: AtomicReference[Config]) ⇒ {
+          ref.set(ConfigFactory.parseString(configuration.payload))
+          LocalFileConfigSnapshot.flash(configuration)
+        }
+        val underlying: AtomicReference[Config] = new AtomicReference[Config]()
+        val c = provider.load(path, new ConfigChangeListener {
+          override def onChange(configuration: ConfigurationDesc): Unit = {
+            refreshAndFlush(configuration, underlying)
+          }
+        })
+        refreshAndFlush(c, underlying)
+        new ConfigRef(underlying)
       }
-      val underlying: AtomicReference[Config] = new AtomicReference[Config]()
-      val c = provider.load(path, (configuration: ConfigurationDesc) ⇒ {
-        refreshAndFlush(configuration, underlying)
-      })
-      refreshAndFlush(c, underlying)
-      new ConfigRef(underlying)
     })
   }
 
@@ -58,7 +66,7 @@ class ConfigServiceImpl(provider: ConfigProvider) extends ConfigService {
     val name = paths.last
     (Seq(namespace, group) ++ paths.dropRight(1)).inits.exists {
       case Nil ⇒ false
-      case segments ⇒
+      case segments: Seq[String] ⇒
         val configName = (segments :+ name).mkString(separator)
         result = Try(provider.load(configName))
         result.isSuccess
@@ -79,8 +87,11 @@ class ConfigServiceImpl(provider: ConfigProvider) extends ConfigService {
     val ref: ObjectRef = new ObjectRef(new AtomicReference[Any]())
     val parser = annotation.parser().newInstance()
     val path = getPath(annotation.name(), namespace, if (annotation.ignoreGroup()) None else Option(group))
-    val configuration = provider.load(path, (configuration: ConfigurationDesc) ⇒
-      refreshAndFlush(configuration, ref, parser))
+    val configuration = provider.load(path, new ConfigChangeListener {
+      override def onChange(configuration: ConfigurationDesc): Unit = {
+        refreshAndFlush(configuration, ref, parser)
+      }
+    })
     refreshAndFlush(configuration, ref, parser)
 
     val enhancer = new Enhancer()
@@ -88,7 +99,11 @@ class ConfigServiceImpl(provider: ConfigProvider) extends ConfigService {
     enhancer.setCallbackType(classOf[ObjectRef])
     enhancer.setCallback(ref)
     val parameterTypes: Array[Class[_]] = clazz.getConstructors.head.getParameterTypes
-    val refObj = enhancer.create(parameterTypes, parameterTypes.map { c ⇒
+    createObject(enhancer, parameterTypes)
+  }
+
+  private def createObject(enhancer: Enhancer, parameterTypes: Array[Class[_]]): AnyRef = {
+    enhancer.create(parameterTypes, parameterTypes.map { c ⇒
       val v = c.getName match {
         case "byte"    ⇒ 0
         case "short"   ⇒ 0
@@ -102,7 +117,6 @@ class ConfigServiceImpl(provider: ConfigProvider) extends ConfigService {
       }
       v.asInstanceOf[AnyRef]
     })
-    refObj
   }
 
   def getPath(name: String, namespace: String, group: Option[String] = None): String = {

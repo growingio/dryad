@@ -2,7 +2,7 @@ package io.growing.dryad.consul.registry
 
 import java.math.BigInteger
 import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.{ Executors, TimeUnit }
+import java.util.concurrent.{ Callable, Executors, TimeUnit }
 import java.util.{ List ⇒ JList }
 
 import com.google.common.cache.CacheBuilder
@@ -20,7 +20,7 @@ import io.growing.dryad.consul.client.ConsulClient
 import io.growing.dryad.listener.ServiceInstanceListener
 import io.growing.dryad.portal.Schema
 import io.growing.dryad.portal.Schema.Schema
-import io.growing.dryad.registry.dto.{ ServiceInstance, Portal, Service }
+import io.growing.dryad.registry.dto.{ Portal, Service, ServiceInstance }
 import io.growing.dryad.registry.{ GrpcHealthCheck, HttpHealthCheck, ServiceRegistry, TTLHealthCheck }
 
 import scala.collection.JavaConverters._
@@ -42,7 +42,9 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
 
     override def runOneIteration(): Unit = {
       ttlPortals.asScala.foreach { portal ⇒
-        executorService.execute(() ⇒ ConsulClient.agentClient.pass(portal.id, s"pass in ${System.currentTimeMillis()}"))
+        executorService.execute(new Runnable {
+          override def run(): Unit = ConsulClient.agentClient.pass(portal.id, s"pass in ${System.currentTimeMillis()}")
+        })
       }
     }
 
@@ -51,7 +53,9 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
     override def shutDown(): Unit = {
       val fixedThreadPool = Executors.newFixedThreadPool(ttlPortals.size())
       ttlPortals.asScala.foreach { portal ⇒
-        fixedThreadPool.execute(() ⇒ ConsulClient.agentClient.fail(portal.id, s"system shutdown in ${System.currentTimeMillis()}"))
+        fixedThreadPool.execute(new Runnable {
+          override def run(): Unit = ConsulClient.agentClient.fail(portal.id, s"system shutdown in ${System.currentTimeMillis()}")
+        })
       }
       fixedThreadPool.shutdown()
       fixedThreadPool.awaitTermination(1, TimeUnit.MINUTES)
@@ -114,13 +118,17 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
 
   override def subscribe(groups: Seq[String], schema: Schema, serviceName: String, listener: ServiceInstanceListener): Unit = {
     val name = getServiceName(schema, serviceName)
-    watchers.get(name, () ⇒ new Watcher(groups, schema, name, listener))
+    watchers.get(name, new Callable[Watcher] {
+      override def call(): Watcher = new Watcher(groups, schema, name, listener)
+    })
   }
 
   override def getInstances(groups: Seq[String], schema: Schema, serviceName: String, listener: Option[ServiceInstanceListener]): Seq[ServiceInstance] = {
     val name = getServiceName(schema, serviceName)
     val response = ConsulClient.healthClient.getHealthyServiceInstances(name)
-    listener.foreach(l ⇒ watchers.get(name, () ⇒ new Watcher(groups, schema, name, l)))
+    listener.foreach(l ⇒ watchers.get(name, new Callable[Watcher] {
+      override def call(): Watcher = new Watcher(groups, schema, name, l)
+    }))
     filterInstances(groups, schema, response.getResponse)
   }
 

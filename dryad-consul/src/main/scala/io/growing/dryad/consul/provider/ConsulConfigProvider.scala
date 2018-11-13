@@ -2,6 +2,7 @@ package io.growing.dryad.consul.provider
 
 import java.math.BigInteger
 import java.util
+import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicReference
 import java.util.{ Optional, List ⇒ JList }
 
@@ -48,8 +49,12 @@ class ConsulConfigProvider extends ConfigProvider {
   }
 
   private[this] def addListener(path: String, listener: ConfigChangeListener): Unit = {
-    listeners.get(path, () ⇒ new util.ArrayList[ConfigChangeListener]()).add(listener)
-    watchers.get(path, () ⇒ new Watcher(path))
+    listeners.get(path, new Callable[JList[ConfigChangeListener]] {
+      override def call(): JList[ConfigChangeListener] = new util.ArrayList[ConfigChangeListener]()
+    }).add(listener)
+    watchers.get(path, new Callable[Watcher] {
+      override def call(): Watcher = new Watcher(path)
+    })
   }
 
   private[this] class Watcher(path: String) {

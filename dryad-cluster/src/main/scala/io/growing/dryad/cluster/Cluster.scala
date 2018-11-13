@@ -1,5 +1,7 @@
 package io.growing.dryad.cluster
 
+import java.util.concurrent.Callable
+
 import com.google.common.cache.CacheBuilder
 import com.google.common.hash.{ HashCode, Hashing }
 import io.growing.dryad.ServiceProvider
@@ -31,10 +33,12 @@ class ClusterImpl(provider: ServiceProvider) extends Cluster {
 
   override def roundRobin(schema: Schema, serviceName: String): ServiceInstance = {
     val name = s"$serviceName-$schema"
-    clusters.get(name, () ⇒ {
-      val rr = RoundRobin(name)
-      val instances = provider.getInstances(schema, serviceName, Option(new ClusterServiceInstanceListener(rr)))
-      rr.setServiceInstance(sortedInstances(instances))
+    clusters.get(name, new Callable[RoundRobin] {
+      override def call(): RoundRobin = {
+        val rr = RoundRobin(name)
+        val instances = provider.getInstances(schema, serviceName, Option(new ClusterServiceInstanceListener(rr)))
+        rr.setServiceInstance(sortedInstances(instances))
+      }
     }).get()
   }
 
