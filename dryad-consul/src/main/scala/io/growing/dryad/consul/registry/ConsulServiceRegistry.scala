@@ -51,14 +51,16 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
     override def scheduler(): Scheduler = Scheduler.newFixedRateSchedule(0, 1, TimeUnit.SECONDS)
 
     override def shutDown(): Unit = {
-      val fixedThreadPool = Executors.newFixedThreadPool(ttlPortals.size())
-      ttlPortals.asScala.foreach { portal ⇒
-        fixedThreadPool.execute(new Runnable {
-          override def run(): Unit = ConsulClient.agentClient.fail(portal.id, s"system shutdown in ${System.currentTimeMillis()}")
-        })
+      if (!ttlPortals.isEmpty) {
+        val fixedThreadPool = Executors.newFixedThreadPool(ttlPortals.size())
+        ttlPortals.asScala.foreach { portal ⇒
+          fixedThreadPool.execute(new Runnable {
+            override def run(): Unit = ConsulClient.agentClient.fail(portal.id, s"system shutdown in ${System.currentTimeMillis()}")
+          })
+        }
+        fixedThreadPool.shutdown()
+        fixedThreadPool.awaitTermination(1, TimeUnit.MINUTES)
       }
-      fixedThreadPool.shutdown()
-      fixedThreadPool.awaitTermination(1, TimeUnit.MINUTES)
     }
   }
   private[this] val ttlCheckScheduler: ServiceManager = new ServiceManager(Seq(ttlCheckService).asJava).startAsync()
