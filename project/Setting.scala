@@ -9,8 +9,8 @@ object Setting extends AutoPlugin {
 
   override def projectSettings: Seq[_root_.sbt.Def.Setting[_]] = Seq(
     organization := "io.growing",
-    scalaVersion := Versions.scala,
-    crossScalaVersions := Seq(Versions.scala, Versions.scala211),
+    scalaVersion := Versions.scalaLibrary,
+    crossScalaVersions := Seq(Versions.scalaLibrary, Versions.scala211),
     dependencyUpgradeModuleNames := Map("scala-library" -> "scala"))
 
 }

@@ -1,3 +1,5 @@
+package io.growing.dryad.consul
+
 import io.growing.dryad.ServiceProvider
 import org.scalatest._
 

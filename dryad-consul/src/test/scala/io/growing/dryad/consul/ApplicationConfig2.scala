@@ -1,3 +1,5 @@
+package io.growing.dryad.consul
+
 import com.typesafe.config.Config
 import configs.Configs
 import io.growing.dryad.annotation.Configuration

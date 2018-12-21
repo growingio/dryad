@@ -159,13 +159,19 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
   }
 
   private def filterInstances(groups: Seq[String], schema: Schema, instances: JList[ServiceHealth]): Seq[ServiceInstance] = {
-    instances.asScala.collect {
-      case health: ServiceHealth if health.getService.getMeta.asScala.exists {
+    instances.asScala.filter { health ⇒
+      val service = health.getService
+      lazy val matchedTag = groups.exists { group ⇒
+        service.getTags.contains(s"""group = "$group"""")
+      }
+      lazy val matchedMeta = service.getMeta.asScala.exists {
         case ("group", g) ⇒ groups.contains(g)
         case _            ⇒ false
-      } ⇒
-        val service = health.getService
-        ServiceInstance(service.getService, schema, service.getAddress, service.getPort)
+      }
+      matchedTag || matchedMeta
+    }.map { health ⇒
+      val service = health.getService
+      ServiceInstance(service.getService, schema, service.getAddress, service.getPort)
     }
   }
 

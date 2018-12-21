@@ -1,3 +1,5 @@
+package io.growing.dryad.consul
+
 import java.util.UUID
 
 import io.growing.dryad.ConfigSystem
