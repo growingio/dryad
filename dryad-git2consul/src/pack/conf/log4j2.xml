@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Properties>
+        <Property name="log-path">logs</Property>
+        <Property name="serverName">git2consul</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="[%d{ISO8601}] [%-5p] [%t#%T] %c#%L - %msg%n"/>
+        </Console>
+
+        <RollingFile name="AppRollingFile" fileName="${log-path}/app.log"
+                     filePattern="${log-path}/app-%d{MM-dd-yyyy}-%i.log.gz">
+            <PatternLayout
+                    pattern="%date{yyyy-MM-dd HH:mm:ss.SSS} ${serverName} [%level] from %logger in %thread - %msg%n%xException"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+            </Policies>
+            <DefaultRolloverStrategy max="7"/>
+        </RollingFile>
+
+        <RollingFile name="access" fileName="${log-path}/access.log"
+                     filePattern="${log-path}/access-%d{MM-dd-yyyy}-%i.log.gz">
+            <PatternLayout pattern="%msg%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+            </Policies>
+            <DefaultRolloverStrategy max="7"/>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <Logger name="io.growing.Bootstrap$" level="info" additivity="false">
+            <AppenderRef ref="AppRollingFile"/>
+        </Logger>
+        <Root level="info">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="AppRollingFile"/>
+        </Root>
+        <Logger name="netty" level="warn" additivity="false">
+            <AppenderRef ref="AppRollingFile"/>
+        </Logger>
+    </Loggers>
+</Configuration>
