@@ -80,7 +80,7 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
         s"""group = "${service.group}"""",
         s"""schema = "${portal.schema}"""",
         s"""pattern = "${portal.pattern}"""")
-      lazy val nonCertifications = if (portal.nonCertifications.nonEmpty) {
+      @volatile lazy val nonCertifications = if (portal.nonCertifications.nonEmpty) {
         Option(s"""non_certifications = "${portal.nonCertifications.mkString(",")}"""")
       } else {
         None
@@ -161,10 +161,10 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
   private def filterInstances(groups: Seq[String], schema: Schema, instances: JList[ServiceHealth]): Seq[ServiceInstance] = {
     instances.asScala.filter { health ⇒
       val service = health.getService
-      lazy val matchedTag = groups.exists { group ⇒
+      @volatile lazy val matchedTag = groups.exists { group ⇒
         service.getTags.contains(s"""group = "$group"""")
       }
-      lazy val matchedMeta = service.getMeta.asScala.exists {
+      @volatile lazy val matchedMeta = service.getMeta.asScala.exists {
         case ("group", g) ⇒ groups.contains(g)
         case _            ⇒ false
       }

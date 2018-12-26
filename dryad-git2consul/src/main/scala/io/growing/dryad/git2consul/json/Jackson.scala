@@ -14,7 +14,7 @@ import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
  */
 object Jackson {
 
-  lazy val mapper: ObjectMapper = {
+  @volatile lazy val mapper: ObjectMapper = {
     val mapper = new ObjectMapper() with ScalaObjectMapper
     mapper.setSerializationInclusion(Include.NON_NULL)
     mapper.setSerializationInclusion(Include.NON_ABSENT)

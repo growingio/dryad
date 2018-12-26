@@ -15,8 +15,8 @@ import org.ehcache.{ Cache, CacheManager }
  */
 object Caches {
 
-  private[this] lazy val versionDefaultSize = 100
-  private[this] lazy val cacheManager: CacheManager = {
+  @volatile private[this] lazy val versionDefaultSize = 100
+  @volatile private[this] lazy val cacheManager: CacheManager = {
     val manager = CacheManagerBuilder.newCacheManagerBuilder()
       .`with`(CacheManagerBuilder.persistence(Paths.get(System.getProperty("user.home"), ".git2consul").toFile))
       .withCache("versions", CacheConfigurationBuilder
@@ -29,6 +29,6 @@ object Caches {
     manager
   }
 
-  lazy val versions: Cache[String, String] = cacheManager.getCache("versions", classOf[String], classOf[String])
+  @volatile lazy val versions: Cache[String, String] = cacheManager.getCache("versions", classOf[String], classOf[String])
 
 }

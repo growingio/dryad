@@ -19,7 +19,7 @@ import com.google.common.io.{ Files ⇒ FilesUtils }
  */
 object Configurations {
 
-  lazy val repositoryConfigName = ".git2consul.conf"
+  @volatile lazy val repositoryConfigName = ".git2consul.conf"
 
   def getConfigurations(root: Path): Seq[Configuration] = {
     val stream = Files.walk(root)

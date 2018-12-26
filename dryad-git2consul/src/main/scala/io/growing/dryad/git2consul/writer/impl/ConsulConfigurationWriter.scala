@@ -22,7 +22,7 @@ import scala.io.Source
  */
 class ConsulConfigurationWriter(config: Git2ConsulConfig) extends ConfigurationWriter {
 
-  private[this] lazy val client: KeyValueClient = {
+  @volatile private[this] lazy val client: KeyValueClient = {
     val connectTimeout = config.consul.connectTimeout.getOrElse(1.seconds.toMillis)
     import config.consul._
     val builder = Consul.builder().withHostAndPort(HostAndPort.fromParts(host, port))

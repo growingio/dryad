@@ -45,7 +45,7 @@ object ServiceProvider {
 }
 
 class ServiceProviderImpl(config: Config) extends ServiceProvider {
-  private[this] lazy val groupConfigPath = "dryad.group"
+  @volatile private[this] lazy val groupConfigPath = "dryad.group"
   private[this] var service: Service = _
   @volatile private[this] lazy val registry: ServiceRegistry = {
     val registryName = config.getString("dryad.registry")

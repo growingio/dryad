@@ -16,7 +16,7 @@ object ExecutionContext {
     Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors() * 2))
 
   object Implicits {
-    implicit lazy final val IO: SExecutionContext = io
+    @volatile implicit lazy final val IO: SExecutionContext = io
   }
 
 }
