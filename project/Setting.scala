@@ -11,6 +11,8 @@ object Setting extends AutoPlugin {
     organization := "io.growing",
     scalaVersion := Versions.scalaLibrary,
     crossScalaVersions := Seq(Versions.scalaLibrary, Versions.scala211),
-    dependencyUpgradeModuleNames := Map("scala-library" -> "scala"))
+    dependencyUpgradeModuleNames := Map(
+      "log4j.*" -> "log4j2",
+      "scala-library" -> "scala"))
 
 }
