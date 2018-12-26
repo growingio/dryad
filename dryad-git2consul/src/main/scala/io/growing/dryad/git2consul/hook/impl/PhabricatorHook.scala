@@ -13,6 +13,8 @@ import io.undertow.server.HttpServerExchange
 import io.undertow.util.StatusCodes
 import org.apache.logging.log4j.scala.Logging
 
+import scala.util.Try
+
 /**
  * Component:
  * Description:
@@ -23,6 +25,7 @@ import org.apache.logging.log4j.scala.Logging
 class PhabricatorHook(config: Git2ConsulConfig) extends ConfigurationHook with Logging {
 
   private[this] val hmackey = config.underlying.getString("git2consul.hooks.phabricator.hmac-key").getBytes(Charsets.UTF_8)
+  private[this] val typeless = Try(config.underlying.getBoolean("git2consul.hooks.phabricator.typeless")).getOrElse(false)
   private[this] val writer = new ConsulConfigurationWriter(config)
   private[this] val syncer = new GitConfigurationSyncer(config, writer)
 
@@ -35,11 +38,12 @@ class PhabricatorHook(config: Git2ConsulConfig) extends ConfigurationHook with L
     val webHookSign = exchange.getRequestHeaders.get("X-Phabricator-Webhook-Signature", 0)
     if (sign == webHookSign) {
       val request = Jackson.mapper.readValue(body, classOf[PhabricatorRequest])
-      if (request.`object`.`type` == "CMIT") {
-        logger.info("phabricator hook trigger sync")
+      val typ = request.`object`.`type`
+      if (typeless || typ == "CMIT") {
+        logger.info(s"phabricator hook trigger sync, type: $typ")
         syncer.sync()
       } else {
-        logger.warn("phabricator hook not a commit command")
+        logger.warn(s"phabricator hook not a allowed command, type: $typ")
       }
     } else {
       exchange.setStatusCode(StatusCodes.FORBIDDEN)
