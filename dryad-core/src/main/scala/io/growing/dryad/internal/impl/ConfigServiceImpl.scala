@@ -1,8 +1,10 @@
 package io.growing.dryad.internal.impl
 
+import java.nio.file.{ Files, Path, Paths, StandardOpenOption }
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicReference
 
+import com.google.common.base.Charsets
 import com.google.common.cache.CacheBuilder
 import com.typesafe.config.{ Config, ConfigFactory, ConfigRef }
 import io.growing.dryad.annotation.Configuration
@@ -28,6 +30,17 @@ class ConfigServiceImpl(provider: ConfigProvider) extends ConfigService {
   private[this] val separator = "/"
   private[this] val objects = CacheBuilder.newBuilder().build[String, AnyRef]()
   private[this] val configs = CacheBuilder.newBuilder().build[String, Config]()
+
+  override def download(root: Path, path: String): Path = {
+    val config = provider.load(path)
+    val paths = path.split(separator)
+    val directory = Paths.get(root.toString, paths.dropRight(1): _*)
+    if (Files.notExists(directory)) {
+      Files.createDirectories(directory)
+    }
+    val filePath = directory.resolve(paths.last)
+    Files.write(filePath, config.payload.getBytes(Charsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
+  }
 
   override def get[T: ClassTag](namespace: String, group: String): T = {
     val clazz = implicitly[ClassTag[T]].runtimeClass

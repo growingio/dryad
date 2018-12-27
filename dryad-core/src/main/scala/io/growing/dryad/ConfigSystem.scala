@@ -1,5 +1,7 @@
 package io.growing.dryad
 
+import java.nio.file.Path
+
 import com.typesafe.config.{ Config, ConfigFactory }
 import io.growing.dryad.internal.ConfigService
 import io.growing.dryad.provider.ConfigProvider
@@ -28,6 +30,8 @@ trait ConfigSystem {
   def getIgnoreGroup(name: String): Config
 
   def getConfigAsString(name: String): String
+
+  def download(root: Path, filename: String): Path
 
   def getConfigAsStringIgnoreGroup(name: String): String
 
@@ -66,6 +70,10 @@ private[this] class ConfigSystemImpl(config: Config) extends ConfigSystem {
 
   override def getConfigAsString(name: String): String = {
     configServer.getConfigAsString(name, _namespace, Option(_group))
+  }
+
+  override def download(root: Path, filename: String): Path = {
+    configServer.download(root, filename)
   }
 
   override def getConfigAsStringIgnoreGroup(name: String): String = {
