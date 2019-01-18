@@ -8,12 +8,12 @@ object Dependencies {
     val ehcache = "3.6.3"
     val jersey = "2.22.2"
     val configs = "0.4.4"
+    val logging = "3.9.1"
     val scalatest = "3.0.5"
     val scala211 = "2.11.12"
     val guava = "27.0.1-jre"
     val scalaUtils = "1.0.4"
     val cglibNodep = "3.2.10"
-    val scalaLogging = "3.9.2"
     val consulClient = "1.3.0"
     val scalaLibrary = "2.12.8"
     val jacksonModuleScala = "2.9.8"
@@ -36,7 +36,7 @@ object Dependencies {
     val scalaUtils: ModuleID = "org.jmotor" %% "scala-utils" % Versions.scalaUtils
     val undertow: ModuleID = "io.undertow" % "undertow-core" % Versions.undertowCore
     val consul: ModuleID = "com.orbitz.consul" % "consul-client" % Versions.consulClient
-    val logging: ModuleID = "com.typesafe.scala-logging" %% "scala-logging" % Versions.scalaLogging
+    val logging: ModuleID = "com.typesafe.scala-logging" %% "scala-logging" % Versions.logging
     val jackson: ModuleID = "com.fasterxml.jackson.module" %% "jackson-module-scala" % Versions.jacksonModuleScala
   }
 
