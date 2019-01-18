@@ -8,7 +8,7 @@ object Dependencies {
     val ehcache = "3.6.3"
     val jersey = "2.22.2"
     val configs = "0.4.4"
-    val logging = "3.9.1"
+    val logging = "3.9.0"
     val scalatest = "3.0.5"
     val scala211 = "2.11.12"
     val guava = "27.0.1-jre"
