@@ -3,10 +3,12 @@ package io.growing.dryad.cluster
 import java.util.concurrent.Callable
 
 import com.google.common.cache.CacheBuilder
-import com.google.common.hash.{ HashCode, Hashing }
+import com.google.common.hash.Hashing
+import com.typesafe.config.Config
 import io.growing.dryad.ServiceProvider
 import io.growing.dryad.listener.ServiceInstanceListener
 import io.growing.dryad.portal.Schema.Schema
+import io.growing.dryad.provider.DirectServiceProvider
 import io.growing.dryad.registry.dto.ServiceInstance
 
 /**
@@ -26,6 +28,8 @@ object Cluster {
 
   def apply(provider: ServiceProvider): Cluster = new ClusterImpl(provider)
 
+  def direct(config: Config): Cluster = new ClusterImpl(new DirectServiceProvider(config))
+
 }
 
 class ClusterImpl(provider: ServiceProvider) extends Cluster {
@@ -43,8 +47,13 @@ class ClusterImpl(provider: ServiceProvider) extends Cluster {
   }
 
   private[cluster] def sortedInstances(instances: Seq[ServiceInstance]): Seq[ServiceInstance] = {
-    instances.sortBy { instance ⇒
-      Hashing.consistentHash(HashCode.fromString(instance.address), instances.size)
+    if (instances.size > 1) {
+      instances.sortBy { instance ⇒
+        val hashCode = s"${instance.address}:${instance.port}".hashCode
+        Hashing.consistentHash(hashCode, instances.size)
+      }
+    } else {
+      instances
     }
   }
 

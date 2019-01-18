@@ -3,6 +3,7 @@ Dryad
 
 [![Build Status](https://travis-ci.org/growingio/dryad.svg?branch=master)](https://travis-ci.org/growingio/dryad)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.growing/dryad-core_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.growing/dryad-core_2.12)
+[![codecov](https://codecov.io/gh/growingio/dryad/branch/master/graph/badge.svg)](https://codecov.io/gh/growingio/dryad)
 
 Dryad 是一个配置文件管理客户端，它提供了配置文件的热加载等功能。并且在不改变原有 Ref 的情况下实现数据的变更。
 
