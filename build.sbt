@@ -22,6 +22,8 @@ lazy val git2Consul = Project(id = "dryad-git2consul", base = file("dryad-git2co
   .enablePlugins(Setting)
   .enablePlugins(DontPublish)
 
+releaseCrossBuild := true
+
 releasePublishArtifactsAction := PgpKeys.publishSigned.value
 
 releaseProcess := Seq[ReleaseStep](
