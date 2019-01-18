@@ -4,20 +4,20 @@ object Dependencies {
 
   object Versions {
     val config = "1.3.3"
+    val log4j2 = "2.11.1"
+    val ehcache = "3.6.3"
     val jersey = "2.22.2"
     val configs = "0.4.4"
-    val log4j2 = "2.11.1"
-    val ehcache = "3.6.1"
     val scalatest = "3.0.5"
     val scala211 = "2.11.12"
     val guava = "27.0.1-jre"
+    val scalaUtils = "1.0.4"
     val cglibNodep = "3.2.10"
-    val scalaUtils = "1.0.3"
-    val scalaLogging = "3.9.0"
+    val scalaLogging = "3.9.2"
     val consulClient = "1.3.0"
     val scalaLibrary = "2.12.8"
     val jacksonModuleScala = "2.9.8"
-    val undertowCore = "2.0.16.Final"
+    val undertowCore = "2.0.17.Final"
     val jgit = "5.2.0.201812061821-r"
   }
 
