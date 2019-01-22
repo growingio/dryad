@@ -20,9 +20,7 @@ lazy val cluster = Project(id = "dryad-cluster", base = file("dryad-cluster"))
   .dependsOn(core)
 
 lazy val git2Consul = Project(id = "dryad-git2consul", base = file("dryad-git2consul"))
-  .enablePlugins(Setting)
   .enablePlugins(DontPublish)
-  .settings(crossScalaVersions := Seq(Versions.scalaLibrary))
 
 releaseCrossBuild := true
 
