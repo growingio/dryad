@@ -12,7 +12,7 @@ object Dependencies {
     val scalatest = "3.0.5"
     val scala211 = "2.11.12"
     val guava = "27.0.1-jre"
-    val scalaUtils = "1.0.2"
+    val scalaUtils = "1.0.4"
     val cglibNodep = "3.2.10"
     val consulClient = "1.3.0"
     val scalaLibrary = "2.12.8"
