@@ -10,7 +10,7 @@ object Setting extends AutoPlugin {
   override def projectSettings: Seq[_root_.sbt.Def.Setting[_]] = Seq(
     organization := "io.growing",
     scalaVersion := Versions.scalaLibrary,
-    crossScalaVersions := Seq(Versions.scalaLibrary, Versions.scala211),
+    crossScalaVersions := Seq(Versions.scalaLibrary),
     dependencyUpgradeModuleNames := Map(
       "log4j.*" -> "log4j2",
       "scala-library" -> "scala"))

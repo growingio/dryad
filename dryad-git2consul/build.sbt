@@ -1,17 +1,6 @@
-import Dependencies.Versions
 import xerial.sbt.pack.PackPlugin._
 
-organization := "io.growing"
-
-scalaVersion := Versions.scalaLibrary
-
-dependencyUpgradeModuleNames := Map(
-  "log4j.*" -> "log4j2",
-  "scala-library" -> "scala")
-
-crossScalaVersions := Seq(Versions.scalaLibrary)
-
-enablePlugins(PackPlugin)
+enablePlugins(Setting, PackPlugin)
 
 libraryDependencies ++= Dependencies.git2Consul
 
