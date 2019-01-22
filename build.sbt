@@ -2,7 +2,7 @@ import ReleaseTransformations._
 
 name := "dryad"
 
-enablePlugins(DontPublish)
+enablePlugins(DontPublish, Setting)
 
 lazy val core = Project(id = "dryad-core", base = file("dryad-core"))
   .enablePlugins(Publish)
