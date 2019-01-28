@@ -1,40 +1,42 @@
-import ReleaseTransformations._
+import Dependencies.Versions
+import xerial.sbt.pack.PackPlugin.autoImport.packExtraClasspath
 
-name := "dryad"
-
-enablePlugins(DontPublish, Setting)
-
-lazy val core = Project(id = "dryad-core", base = file("dryad-core"))
-  .enablePlugins(Publish)
-  .enablePlugins(Setting)
-
-lazy val consul = Project(id = "dryad-consul", base = file("dryad-consul"))
-  .enablePlugins(Publish)
-  .enablePlugins(Setting)
-  .dependsOn(core)
-
-lazy val cluster = Project(id = "dryad-cluster", base = file("dryad-cluster"))
-  .enablePlugins(Publish)
-  .enablePlugins(Setting)
-  .dependsOn(core)
-
-lazy val git2Consul = Project(id = "dryad-git2consul", base = file("dryad-git2consul"))
+lazy val root = Project(id = "dryad", base = file("."))
+  .settings(
+    organization := "io.growing",
+    scalaVersion := Versions.scalaLibrary,
+  )
   .enablePlugins(DontPublish)
+  .aggregate(core, consul, cluster, git2Consul)
 
-releaseCrossBuild := true
+lazy val core = dryadModule("dryad-core")
+  .settings(Dependencies.dryadCore)
+  .settings(crossScalaVersions := Dependencies.crossScalaVersions)
 
-releasePublishArtifactsAction := PgpKeys.publishSigned.value
+lazy val consul = dryadModule("dryad-consul")
+  .settings(Dependencies.dryadConsul)
+  .settings(crossScalaVersions := Dependencies.crossScalaVersions)
+  .dependsOn(core)
 
-releaseProcess := Seq[ReleaseStep](
-  checkSnapshotDependencies,
-  inquireVersions,
-  runClean,
-  runTest,
-  setReleaseVersion,
-  commitReleaseVersion,
-  tagRelease,
-  publishArtifacts,
-  setNextVersion,
-  commitNextVersion,
-  pushChanges
-)
+lazy val cluster = dryadModule("dryad-cluster")
+  .settings(Dependencies.dryadCluster)
+  .settings(crossScalaVersions := Dependencies.crossScalaVersions)
+  .dependsOn(core)
+
+lazy val git2Consul = dryadModule("dryad-git2consul")
+  .settings(Dependencies.git2Consul)
+  .settings(
+    crossScalaVersions := Seq(Dependencies.Versions.scalaLibrary),
+    packMain := Map("git2consul" -> "io.growing.dryad.git2consul.Git2ConsulBootstrap"),
+    packExtraClasspath := Map("git2consul" -> Seq("${PROG_HOME}/conf"))
+  )
+  .enablePlugins(PackPlugin, DontPublish)
+
+def dryadModule(name: String): Project = Project(id = name, base = file(name))
+  .settings(
+    organization := "io.growing",
+    scalaVersion := Versions.scalaLibrary,
+    dependencyUpgradeModuleNames := Map(
+      "log4j.*" -> "log4j2",
+      "scala-library" -> "scala")
+  )

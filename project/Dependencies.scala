@@ -1,4 +1,5 @@
 import sbt._
+import Keys._
 
 object Dependencies {
 
@@ -46,13 +47,17 @@ object Dependencies {
 
   import Dependencies.Compiles._
 
-  val dryadCore: Seq[ModuleID] = Seq(configs, cglib, logging, config, guava, Tests.scalaTest)
+  val l = libraryDependencies
 
-  val dryadConsul: Seq[ModuleID] = Seq(consul, Tests.scalaTest)
+  val dryadCore = l ++= Seq(configs, cglib, logging, config, guava, Tests.scalaTest)
 
-  val dryadCluster: Seq[ModuleID] = Seq(Tests.scalaTest)
+  val dryadConsul = l ++= Seq(consul, Tests.scalaTest)
 
-  val git2Consul: Seq[ModuleID] = log4j2 ++ Seq(jgit, ehcache, config, configs, guava,
+  val dryadCluster = l ++= Seq(Tests.scalaTest)
+
+  val git2Consul = l ++= log4j2 ++ Seq(jgit, ehcache, config, configs, guava,
     jackson, undertow, consul, scalaUtils, Tests.scalaTest)
+
+  val crossScalaVersions: Seq[String] = Seq(Versions.scalaLibrary, "2.11.11")
 
 }

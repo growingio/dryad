@@ -1,0 +1,34 @@
+#!/bin/bash
+
+echo "Current version info:"
+cat version.sbt
+echo -n "Set release version: "
+read release_version
+echo -n "set next version: "
+read nv
+echo "version in ThisBuild := \"$release_version\"" > version.sbt
+
+tag_name="v$release_version"
+next_version="$nv-SNAPSHOT"
+
+sbt clean
+sbt dependencyUpdates
+sbt test
+sbt packArchive
+
+git add version.sbt
+git commit -m "Setting version to $release_version"
+git tag $tag_name
+git push origin $tag_name
+
+cd dryad-git2consul/target
+curl -O https://gist.githubusercontent.com/relaxdiego/f0b22c4f8356e9895d92471e4e139419/raw/18fd80fabd60be52d513fe2a439773c5fff7df79/upload-github-release-asset.sh
+
+for file in *.{gz,zip}; do
+  sh upload-github-release-asset.sh github_api_token=$UPLOAD_ASSETS_TOKEN owner=growingio repo=dryad tag=$tag_name filename=./$file
+done
+
+echo "version in ThisBuild := \"next_version\"" > version.sbt
+git add version.sbt
+git commit -m "Setting version to $next_version"
+git push origin master
