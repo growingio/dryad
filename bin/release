@@ -14,8 +14,8 @@ next_version="$nv-SNAPSHOT"
 sbt clean
 sbt dependencyUpdates
 sbt test
+sbt +publishSigned
 sbt packArchive
-sbt +publishSinged
 
 git add version.sbt
 git commit -m "Setting version to $release_version"
