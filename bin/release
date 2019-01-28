@@ -23,7 +23,7 @@ git push origin $tag_name
 git push origin --tags
 
 RELEASE_URL=https://api.github.com/repos/growingio/dryad/releases
-curl -X POST --data-binary {"tag_name": "$tag_name", "name": "$release_version", "target_commitish": "master"} -H "Authorization: token $UPLOAD_ASSETS_TOKEN" -H "Content-Type: application/json" $RELEASE_URL
+curl -X POST --data-binary "{\"tag_name\": \"$tag_name\", \"name\": \"$release_version\", \"target_commitish\": \"master\"}" -H "Authorization: token $UPLOAD_ASSETS_TOKEN" -H "Content-Type: application/json" $RELEASE_URL
 
 cd dryad-git2consul/target
 curl -O https://gist.githubusercontent.com/relaxdiego/f0b22c4f8356e9895d92471e4e139419/raw/18fd80fabd60be52d513fe2a439773c5fff7df79/upload-github-release-asset.sh
