@@ -11,9 +11,8 @@ echo "version in ThisBuild := \"$release_version\"" > version.sbt
 tag_name="v$release_version"
 next_version="$nv-SNAPSHOT"
 
-sbt clean
 sbt dependencyUpdates
-sbt test
+sbt clean test
 sbt +publishSigned
 sbt packArchive
 
