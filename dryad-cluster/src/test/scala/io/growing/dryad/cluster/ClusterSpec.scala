@@ -5,7 +5,7 @@ import io.growing.dryad.ServiceProvider
 import io.growing.dryad.listener.ServiceInstanceListener
 import io.growing.dryad.portal.Schema
 import io.growing.dryad.portal.Schema.Schema
-import io.growing.dryad.registry.dto.ServiceInstance
+import io.growing.dryad.registry.dto.{ Service, ServiceInstance }
 import org.scalatest.FunSuite
 
 /**
@@ -22,6 +22,8 @@ class ClusterSpec extends FunSuite {
       override def register(): Unit = ???
 
       override def deregister(): Unit = ???
+
+      override def getService: Service = ???
 
       override def register(patterns: (Schema, Seq[String])*): Unit = ???
 

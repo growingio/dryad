@@ -4,7 +4,7 @@ import xerial.sbt.pack.PackPlugin.autoImport.packExtraClasspath
 lazy val root = Project(id = "dryad", base = file("."))
   .settings(
     organization := "io.growing",
-    scalaVersion := Versions.scalaLibrary,
+    scalaVersion := Versions.scala212,
   )
   .enablePlugins(DontPublish)
   .aggregate(core, consul, cluster, git2Consul)
@@ -26,7 +26,7 @@ lazy val cluster = dryadModule("dryad-cluster")
 lazy val git2Consul = dryadModule("dryad-git2consul")
   .settings(Dependencies.git2Consul)
   .settings(
-    crossScalaVersions := Seq(Dependencies.Versions.scalaLibrary),
+    crossScalaVersions := Seq(Dependencies.Versions.scala212),
     packMain := Map("git2consul" -> "io.growing.dryad.git2consul.Git2ConsulBootstrap"),
     packExtraClasspath := Map("git2consul" -> Seq("${PROG_HOME}/conf"))
   )
@@ -35,7 +35,7 @@ lazy val git2Consul = dryadModule("dryad-git2consul")
 def dryadModule(name: String): Project = Project(id = name, base = file(name))
   .settings(
     organization := "io.growing",
-    scalaVersion := Versions.scalaLibrary,
+    scalaVersion := Versions.scala212,
     dependencyUpgradeModuleNames := Map(
       "log4j.*" -> "log4j2",
       "scala-library" -> "scala")

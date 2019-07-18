@@ -5,10 +5,10 @@ import java.net.InetAddress
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.typesafe.config.{ Config, ConfigFactory }
-import io.growing.dryad.registry.dto.{ LoadBalancing, Portal, Service, ServiceInstance }
 import io.growing.dryad.listener.ServiceInstanceListener
 import io.growing.dryad.portal.Schema
 import io.growing.dryad.portal.Schema.Schema
+import io.growing.dryad.registry.dto.{ LoadBalancing, Portal, Service, ServiceInstance }
 import io.growing.dryad.registry.{ GrpcHealthCheck, HealthCheck, HttpHealthCheck, ServiceRegistry, TTLHealthCheck }
 import io.growing.dryad.util.ConfigUtils._
 
@@ -27,6 +27,8 @@ trait ServiceProvider {
   def register(): Unit
 
   def deregister(): Unit
+
+  def getService: Service
 
   def register(patterns: (Schema, Seq[String])*): Unit
 
@@ -51,6 +53,7 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
     val registryName = config.getString("dryad.registry")
     Class.forName(registryName).newInstance().asInstanceOf[ServiceRegistry]
   }
+  private[this] lazy val deregisterCriticalServiceAfterFactor = 10
 
   override def register(): Unit = {
     initService(Seq.empty)
@@ -60,6 +63,11 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
   override def deregister(): Unit = {
     checkState()
     registry.deregister(service)
+  }
+
+  override def getService: Service = {
+    checkState()
+    service
   }
 
   override def register(patterns: (Schema, Seq[String])*): Unit = {
@@ -75,11 +83,6 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
   override def getInstances(schema: Schema, serviceName: String, listener: Option[ServiceInstanceListener]): Seq[ServiceInstance] = {
     val group = config.getString(groupConfigPath)
     registry.getInstances(Seq("_global_", group), schema, serviceName, listener)
-  }
-
-  def getService: Service = {
-    checkState()
-    service
   }
 
   private[this] def checkState(): Unit = {
@@ -105,46 +108,64 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
     val address = serviceConfig.getStringOpt("address").getOrElse(InetAddress.getLocalHost.getHostAddress)
     val portals = serviceConfig.entrySet().asScala.collect {
       case entry if entry.getKey.contains('.') ⇒ entry.getKey
-    }.groupBy(_.split("\\.").head).keys.map { schema ⇒
-      val portalConfig = serviceConfig.getConfig(schema)
+    }.groupBy(_.split("\\.").head).keys.map { schemaName ⇒
+      val portalConfig = serviceConfig.getConfig(schemaName)
       val port = portalConfig.getInt("port")
       val pattern = patterns.collectFirst {
-        case (s, ps) if Schema.withName(schema.toLowerCase) == s ⇒ ps.mkString(",")
+        case (s, ps) if Schema.withName(schemaName.toLowerCase) == s ⇒ ps.mkString(",")
       }.fold(portalConfig.getStringOpt("pattern").getOrElse("/.*"))(identity)
       val nonCertifications = portalConfig.getStringSeqOpt("non-certifications").map(_.distinct).getOrElse(Seq.empty)
-      val id = Hashing.murmur3_128().hashString(address + s"-$port-$group", Charsets.UTF_8).toString
-      Portal(id, Schema.withName(schema), port, pattern, getCheck(name, portalConfig, schema, address, port), nonCertifications)
+      val id = Hashing.murmur3_128().hashString(s"$name-$group-$address-$port", Charsets.UTF_8).toString
+      val schema = Schema.withName(schemaName)
+      Portal(id, schema, port, pattern, getCheck(id, name, portalConfig, schema, address, port), nonCertifications)
     }.toSet
     val priority = serviceConfig.getIntOpt("priority").getOrElse(0)
     val loadBalancing = serviceConfig.getStringOpt("load-balancing").map(lb ⇒ LoadBalancing.withName(lb))
     Service(name, address, group, portals, priority, loadBalancing)
   }
 
-  private[dryad] def getCheck(name: String, conf: Config, schema: String, address: String, port: Int): HealthCheck = {
-    val factor = 10
+  private[dryad] def getCheck(id: String, name: String, conf: Config, schema: Schema, address: String, port: Int): HealthCheck = {
+    lazy val deregisterCriticalServiceAfterOpt = conf.getDurationOpt("deregister-critical-service-after")
     conf.getConfigOpt("check") match {
       case None ⇒
         val ttl = 10.seconds
-        TTLHealthCheck(ttl, ttl.*(factor))
-      case Some(checkConfig) ⇒
-        val deregisterCriticalServiceAfterOpt = conf.getDurationOpt("deregister-critical-service-after")
-        val ttl = checkConfig.getDurationOpt("ttl").map { ttl ⇒
-          val deregisterCriticalServiceAfter = deregisterCriticalServiceAfterOpt.getOrElse(ttl.*(factor))
-          TTLHealthCheck(ttl, deregisterCriticalServiceAfter)
-        }
-        @volatile lazy val interval = checkConfig.getDurationOpt("interval").getOrElse(10.seconds)
-        val http = checkConfig.getStringOpt("url").map { url ⇒
-          val _url = if (url.startsWith("/")) s"$schema://$address:$port$url" else url
-          val timeout = checkConfig.getDurationOpt("timeout").getOrElse(5.seconds)
-          val deregisterCriticalServiceAfter = deregisterCriticalServiceAfterOpt.getOrElse(interval.*(factor))
-          HttpHealthCheck(_url, interval, timeout, deregisterCriticalServiceAfter)
-        }
-        val grpc = checkConfig.getBooleanOpt("grpc-use-tls").map { useTls ⇒
-          val deregisterCriticalServiceAfter = deregisterCriticalServiceAfterOpt.getOrElse(interval.*(factor))
-          GrpcHealthCheck(s"$address:$port/$name", interval, useTls, deregisterCriticalServiceAfter)
-        }
-        (ttl orElse http orElse grpc).get
+        TTLHealthCheck(ttl, ttl * deregisterCriticalServiceAfterFactor)
+      case Some(checkConfig) if schema == Schema.HTTP       ⇒ parseHttpCheck(checkConfig, id, name, address, port, deregisterCriticalServiceAfterOpt)
+      case Some(checkConfig) if schema == Schema.WEB_SOCKET ⇒ parseHttpCheck(checkConfig, id, name, address, port, deregisterCriticalServiceAfterOpt)
+      case Some(checkConfig) if schema == Schema.GRPC       ⇒ parseGrpcCheck(checkConfig, name, address, port, deregisterCriticalServiceAfterOpt)
+      case Some(checkConfig)                                ⇒ parseTtlCheck(checkConfig, deregisterCriticalServiceAfterOpt)
     }
+  }
+
+  private[dryad] def parseTtlCheck(config: Config, deregisterCriticalServiceAfterOpt: Option[Duration]): TTLHealthCheck = {
+    val ttl = getDuration(config, "ttl")
+    TTLHealthCheck(ttl, deregisterCriticalServiceAfterOpt.getOrElse(ttl * deregisterCriticalServiceAfterFactor))
+  }
+
+  private[dryad] def parseHttpCheck(config: Config, id: String, name: String, address: String, port: Int,
+                                    deregisterCriticalServiceAfterOpt: Option[Duration]): HttpHealthCheck = {
+    @volatile lazy val interval = paresInterval(config)
+    val checkUrl = config.getStringOpt("url").getOrElse(s"/$id/check")
+    val url = if (checkUrl.startsWith("/")) s"http://$address:$port$checkUrl" else checkUrl
+    val timeout = config.getDurationOpt("timeout").getOrElse(5.seconds)
+    val deregisterCriticalServiceAfter = deregisterCriticalServiceAfterOpt
+    HttpHealthCheck(url, interval, timeout, deregisterCriticalServiceAfter.getOrElse(interval * deregisterCriticalServiceAfterFactor))
+  }
+
+  private[dryad] def parseGrpcCheck(config: Config, name: String, address: String, port: Int,
+                                    deregisterCriticalServiceAfterOpt: Option[Duration]): GrpcHealthCheck = {
+    val useTls = config.getBoolean("grpc-use-tls")
+    @volatile lazy val interval = paresInterval(config)
+    val deregisterCriticalServiceAfter = deregisterCriticalServiceAfterOpt.getOrElse(interval * deregisterCriticalServiceAfterFactor)
+    GrpcHealthCheck(s"$address:$port/$name", interval, useTls, deregisterCriticalServiceAfter)
+  }
+
+  private[dryad] def paresInterval(config: Config): Duration = {
+    config.getDurationOpt("interval").getOrElse(10.seconds)
+  }
+
+  private[dryad] def getDuration(config: Config, key: String): Duration = {
+    config.getDuration(key).toMillis.milliseconds
   }
 
 }

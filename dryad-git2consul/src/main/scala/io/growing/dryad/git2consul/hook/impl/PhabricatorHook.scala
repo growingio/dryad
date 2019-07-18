@@ -3,6 +3,7 @@ package io.growing.dryad.git2consul.hook.impl
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.google.common.io.ByteStreams
+import com.typesafe.scalalogging.LazyLogging
 import io.growing.dryad.git2consul.config.Git2ConsulConfig
 import io.growing.dryad.git2consul.hook.ConfigurationHook
 import io.growing.dryad.git2consul.hook.dto.PhabricatorRequest
@@ -11,7 +12,6 @@ import io.growing.dryad.git2consul.sync.impl.GitConfigurationSyncer
 import io.growing.dryad.git2consul.writer.impl.ConsulConfigurationWriter
 import io.undertow.server.HttpServerExchange
 import io.undertow.util.StatusCodes
-import org.apache.logging.log4j.scala.Logging
 
 import scala.util.Try
 
@@ -22,7 +22,7 @@ import scala.util.Try
  *
  * @author AI
  */
-class PhabricatorHook(config: Git2ConsulConfig) extends ConfigurationHook with Logging {
+class PhabricatorHook(config: Git2ConsulConfig) extends ConfigurationHook with LazyLogging {
 
   private[this] val hmackey = config.underlying.getString("git2consul.hooks.phabricator.hmac-key").getBytes(Charsets.UTF_8)
   private[this] val typeless = Try(config.underlying.getBoolean("git2consul.hooks.phabricator.typeless")).getOrElse(false)

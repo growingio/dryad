@@ -30,4 +30,37 @@ class ServiceProviderImplSpec extends FunSuite {
     assert(grpcPortalOpt.get.port == 9083)
   }
 
+  test("parse default http check") {
+    val config = ConfigFactory.parseString(
+      s"""
+         |dryad {
+         |
+ |  group = "dev"
+         |  namespace = "default"
+         |
+ |  service {
+         |    priority = 10
+         |    address = "0.0.0.0"
+         |    load-balancing = "url_chash"
+         |
+ |    http {
+         |      port = 8083
+         |      non-certifications = ["/internal/*"]
+         |      check {
+         |        interval = 10s
+         |      }
+         |    }
+         |
+         |
+ |  }
+         |}
+       """.stripMargin)
+    val provider = new ServiceProviderImpl(config)
+    provider.initService(Seq.empty)
+    val service = provider.getService
+    val httpPortal = service.portals.find(_.schema == Schema.HTTP).get
+    val httpCheck = httpPortal.check.asInstanceOf[HttpHealthCheck]
+    assert(httpCheck.url == s"http://0.0.0.0:8083/${httpPortal.id}/check")
+  }
+
 }

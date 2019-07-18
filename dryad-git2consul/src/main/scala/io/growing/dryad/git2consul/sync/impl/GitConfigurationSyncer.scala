@@ -4,12 +4,12 @@ import java.nio.file.{ Files, Path }
 
 import com.google.common.hash.Hashing
 import com.google.common.io.{ Files ⇒ FilesUtils }
+import com.typesafe.scalalogging.LazyLogging
 import io.growing.dryad.git2consul.cache.Caches
 import io.growing.dryad.git2consul.config.Git2ConsulConfig
 import io.growing.dryad.git2consul.sync.ConfigurationSyncer
 import io.growing.dryad.git2consul.utils.Configurations
 import io.growing.dryad.git2consul.writer.ConfigurationWriter
-import org.apache.logging.log4j.scala.Logging
 import org.eclipse.jgit.api.Git
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -23,7 +23,7 @@ import scala.concurrent.{ Await, Future }
  *
  * @author AI
  */
-class GitConfigurationSyncer(config: Git2ConsulConfig, configurationWriter: ConfigurationWriter) extends ConfigurationSyncer with Logging {
+class GitConfigurationSyncer(config: Git2ConsulConfig, configurationWriter: ConfigurationWriter) extends ConfigurationSyncer with LazyLogging {
   private[this] val writeTimeout = 1.minutes
 
   override def sync(): Unit = {
