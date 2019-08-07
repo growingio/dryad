@@ -1,16 +1,17 @@
 package io.growing.dryad
 
 import java.net.InetAddress
+import java.util
+import java.util.Map.Entry
 
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
-import com.typesafe.config.{ Config, ConfigFactory }
+import com.typesafe.config.{ Config, ConfigFactory, ConfigValue }
 import io.growing.dryad.listener.ServiceInstanceListener
-import io.growing.dryad.portal.Schema
-import io.growing.dryad.portal.Schema.Schema
-import io.growing.dryad.registry.dto.{ LoadBalancing, Portal, Service, ServiceInstance }
+import io.growing.dryad.registry.dto.Schema.Schema
+import io.growing.dryad.registry.dto.{ LoadBalancing, Schema, Service, ServiceInstance, ServiceMeta }
 import io.growing.dryad.registry.{ GrpcHealthCheck, HealthCheck, HttpHealthCheck, ServiceRegistry, TTLHealthCheck }
-import io.growing.dryad.util.ConfigUtils._
+import io.growing.dryad.utils.ConfigUtils._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -28,9 +29,9 @@ trait ServiceProvider {
 
   def deregister(): Unit
 
-  def getService: Service
+  def getServices: Set[Service]
 
-  def register(patterns: (Schema, Seq[String])*): Unit
+  def addPatterns(schema: Schema, patterns: String*): Unit
 
   def subscribe(schema: Schema, serviceName: String, listener: ServiceInstanceListener): Unit
 
@@ -48,31 +49,38 @@ object ServiceProvider {
 
 class ServiceProviderImpl(config: Config) extends ServiceProvider {
   @volatile private[this] lazy val groupConfigPath = "dryad.group"
-  private[this] var service: Service = _
   @volatile private[this] lazy val registry: ServiceRegistry = {
     val registryName = config.getString("dryad.registry")
     Class.forName(registryName).newInstance().asInstanceOf[ServiceRegistry]
   }
-  private[this] lazy val deregisterCriticalServiceAfterFactor = 10
+  @volatile private[this] lazy val services = new util.ArrayList[Service]()
+  @volatile private[this] lazy val deregisterCriticalServiceAfterFactor = 10
 
   override def register(): Unit = {
-    initService(Seq.empty)
-    registry.register(service)
+    initService()
+    services.asScala.foreach(registry.register)
   }
 
   override def deregister(): Unit = {
-    checkState()
-    registry.deregister(service)
+    services.asScala.foreach(registry.deregister)
   }
 
-  override def getService: Service = {
-    checkState()
-    service
+  override def getServices: Set[Service] = {
+    initService()
+    services.asScala.toSet
   }
 
-  override def register(patterns: (Schema, Seq[String])*): Unit = {
-    initService(patterns)
-    registry.register(service)
+  override def addPatterns(schema: Schema, patterns: String*): Unit = {
+    if (patterns.nonEmpty) {
+      this.synchronized {
+        val newServices = services.asScala.map {
+          case service: Service if service.schema == schema ⇒ service.withPatterns(patterns)
+          case service: Service                             ⇒ service
+        }
+        services.clear()
+        services.addAll(newServices.asJava)
+      }
+    }
   }
 
   override def subscribe(schema: Schema, serviceName: String, listener: ServiceInstanceListener): Unit = {
@@ -85,43 +93,35 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
     registry.getInstances(Seq("_global_", group), schema, serviceName, listener)
   }
 
-  private[this] def checkState(): Unit = {
-    if (Option(service).isEmpty) {
-      throw new IllegalStateException("service not init")
-    }
-  }
-
-  private[dryad] def initService(patterns: Seq[(Schema, Seq[String])]): Unit = {
-    if (Option(service).isEmpty) {
+  private[dryad] def initService(): Unit = {
+    if (services.isEmpty) {
       this.synchronized {
-        if (Option(service).isEmpty) {
-          service = buildService(patterns)
+        if (services.isEmpty) {
+          parseServices().foreach(services.add)
         }
       }
     }
   }
 
-  private[dryad] def buildService(patterns: Seq[(Schema, Seq[String])]): Service = {
+  private[dryad] def parseServices(): Set[Service] = {
     val group = config.getString(groupConfigPath)
     val name = config.getString("dryad.namespace")
-    val serviceConfig = config.getConfig("dryad.service")
-    val address = serviceConfig.getStringOpt("address").getOrElse(InetAddress.getLocalHost.getHostAddress)
-    val portals = serviceConfig.entrySet().asScala.collect {
-      case entry if entry.getKey.contains('.') ⇒ entry.getKey
+    val rootConfig = config.getConfig("dryad.service")
+    val priority = rootConfig.getIntOpt("priority").getOrElse(0)
+    val address = rootConfig.getStringOpt("address").getOrElse(InetAddress.getLocalHost.getHostAddress)
+    rootConfig.entrySet().asScala.collect {
+      case entry: Entry[String, ConfigValue] if entry.getKey.contains('.') ⇒ entry.getKey
     }.groupBy(_.split("\\.").head).keys.map { schemaName ⇒
-      val portalConfig = serviceConfig.getConfig(schemaName)
-      val port = portalConfig.getInt("port")
-      val pattern = patterns.collectFirst {
-        case (s, ps) if Schema.withName(schemaName.toLowerCase) == s ⇒ ps.mkString(",")
-      }.fold(portalConfig.getStringOpt("pattern").getOrElse("/.*"))(identity)
-      val nonCertifications = portalConfig.getStringSeqOpt("non-certifications").map(_.distinct).getOrElse(Seq.empty)
-      val id = Hashing.murmur3_128().hashString(s"$name-$group-$address-$port", Charsets.UTF_8).toString
       val schema = Schema.withName(schemaName)
-      Portal(id, schema, port, pattern, getCheck(id, name, portalConfig, schema, address, port), nonCertifications)
+      val serviceConfig = rootConfig.getConfig(schemaName)
+      val port = serviceConfig.getInt("port")
+      val pattern = serviceConfig.getStringOpt("pattern").getOrElse("/.*")
+      val nonCertifications = serviceConfig.getStringSeqOpt("non-certifications").map(_.distinct).getOrElse(Seq.empty)
+      val id = Hashing.murmur3_128().hashString(Seq(name, group, address, port).mkString("-"), Charsets.UTF_8).toString
+      val loadBalancing = serviceConfig.getStringOpt("load-balancing").map(lb ⇒ LoadBalancing.withName(lb))
+      val meta = ServiceMeta(pattern, nonCertifications, loadBalancing)
+      Service(id, name, schema, address, port, group, priority, meta, getCheck(id, name, serviceConfig, schema, address, port))
     }.toSet
-    val priority = serviceConfig.getIntOpt("priority").getOrElse(0)
-    val loadBalancing = serviceConfig.getStringOpt("load-balancing").map(lb ⇒ LoadBalancing.withName(lb))
-    Service(name, address, group, portals, priority, loadBalancing)
   }
 
   private[dryad] def getCheck(id: String, name: String, conf: Config, schema: Schema, address: String, port: Int): HealthCheck = {

@@ -1,6 +1,6 @@
 package io.growing.dryad.registry.dto
 
-import io.growing.dryad.portal.Schema.Schema
+import Schema.Schema
 
 /**
  * Component:

@@ -1,7 +1,6 @@
 package io.growing.dryad.cluster
 
-import io.growing.dryad.portal.Schema
-import io.growing.dryad.registry.dto.ServiceInstance
+import io.growing.dryad.registry.dto.{ Schema, ServiceInstance }
 import org.scalatest.FunSuite
 
 /**

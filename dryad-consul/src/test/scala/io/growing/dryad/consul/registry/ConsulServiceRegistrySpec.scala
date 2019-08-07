@@ -2,7 +2,7 @@ package io.growing.dryad.consul.registry
 
 import com.typesafe.config.ConfigFactory
 import io.growing.dryad.ServiceProviderImpl
-import io.growing.dryad.portal.Schema
+import io.growing.dryad.registry.dto.Schema
 import org.scalatest.FunSuite
 
 /**

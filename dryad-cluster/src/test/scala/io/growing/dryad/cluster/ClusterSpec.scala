@@ -3,9 +3,8 @@ package io.growing.dryad.cluster
 import com.typesafe.config.ConfigFactory
 import io.growing.dryad.ServiceProvider
 import io.growing.dryad.listener.ServiceInstanceListener
-import io.growing.dryad.portal.Schema
-import io.growing.dryad.portal.Schema.Schema
-import io.growing.dryad.registry.dto.{ Service, ServiceInstance }
+import io.growing.dryad.registry.dto.Schema.Schema
+import io.growing.dryad.registry.dto.{ Schema, Service, ServiceInstance }
 import org.scalatest.FunSuite
 
 /**
@@ -23,9 +22,9 @@ class ClusterSpec extends FunSuite {
 
       override def deregister(): Unit = ???
 
-      override def getService: Service = ???
+      override def getServices: Set[Service] = ???
 
-      override def register(patterns: (Schema, Seq[String])*): Unit = ???
+      override def addPatterns(schema: Schema, patterns: String*): Unit = ???
 
       override def subscribe(schema: Schema, serviceName: String, listener: ServiceInstanceListener): Unit = ???
 

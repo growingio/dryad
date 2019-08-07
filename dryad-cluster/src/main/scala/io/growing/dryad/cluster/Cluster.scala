@@ -7,7 +7,7 @@ import com.google.common.hash.Hashing
 import com.typesafe.config.Config
 import io.growing.dryad.ServiceProvider
 import io.growing.dryad.listener.ServiceInstanceListener
-import io.growing.dryad.portal.Schema.Schema
+import io.growing.dryad.registry.dto.Schema.Schema
 import io.growing.dryad.provider.DirectServiceProvider
 import io.growing.dryad.registry.dto.ServiceInstance
 

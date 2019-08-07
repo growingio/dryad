@@ -1,4 +1,4 @@
-package io.growing.dryad.portal
+package io.growing.dryad.registry.dto
 
 /**
  * Component:

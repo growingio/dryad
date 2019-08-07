@@ -1,6 +1,7 @@
 package io.growing.dryad.registry.dto
 
-import io.growing.dryad.registry.dto.LoadBalancing.LoadBalancing
+import io.growing.dryad.registry.HealthCheck
+import io.growing.dryad.registry.dto.Schema.Schema
 
 /**
  * Component:
@@ -9,6 +10,11 @@ import io.growing.dryad.registry.dto.LoadBalancing.LoadBalancing
  *
  * @author Andy Ai
  */
-final case class Service(name: String, address: String,
-                         group: String, portals: Set[Portal],
-                         priority: Int, loadBalancing: Option[LoadBalancing])
+final case class Service(id: String, name: String, schema: Schema, address: String,
+                         port: Int, group: String, priority: Int, meta: ServiceMeta, check: HealthCheck) {
+
+  def withPatterns(patterns: Iterable[String]): Service = {
+    copy(meta = meta.copy(pattern = patterns.mkString(",")))
+  }
+
+}

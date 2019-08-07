@@ -3,7 +3,7 @@ package io.growing.dryad.provider
 import com.typesafe.config.Config
 import io.growing.dryad.ServiceProvider
 import io.growing.dryad.listener.ServiceInstanceListener
-import io.growing.dryad.portal.Schema.Schema
+import io.growing.dryad.registry.dto.Schema.Schema
 import io.growing.dryad.registry.dto.{ Service, ServiceInstance }
 
 import scala.collection.JavaConverters._
@@ -20,9 +20,9 @@ class DirectServiceProvider(config: Config) extends ServiceProvider {
 
   override def deregister(): Unit = ???
 
-  override def getService: Service = ???
+  override def getServices: Set[Service] = ???
 
-  override def register(patterns: (Schema, Seq[String])*): Unit = ???
+  override def addPatterns(schema: Schema, patterns: String*): Unit = ???
 
   override def subscribe(schema: Schema, serviceName: String, listener: ServiceInstanceListener): Unit = ???
 

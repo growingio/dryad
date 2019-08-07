@@ -1,4 +1,4 @@
-package io.growing.dryad.util
+package io.growing.dryad.utils
 
 import com.typesafe.config.Config
 

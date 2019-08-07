@@ -18,10 +18,9 @@ import com.orbitz.consul.option.QueryOptions
 import com.typesafe.scalalogging.LazyLogging
 import io.growing.dryad.consul.client.ConsulClient
 import io.growing.dryad.listener.ServiceInstanceListener
-import io.growing.dryad.portal.Schema
-import io.growing.dryad.portal.Schema.Schema
-import io.growing.dryad.registry.dto.{ Portal, Service, ServiceInstance }
-import io.growing.dryad.registry.{ GrpcHealthCheck, HttpHealthCheck, ServiceRegistry, TTLHealthCheck }
+import io.growing.dryad.registry.dto.Schema.Schema
+import io.growing.dryad.registry.dto.{ Schema, Service, ServiceInstance }
+import io.growing.dryad.registry.{ GrpcHealthCheck, HealthCheck, HttpHealthCheck, ServiceRegistry, TTLHealthCheck }
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.Duration
@@ -35,13 +34,13 @@ import scala.concurrent.duration.Duration
  */
 class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
   private[this] val BLOCK_QUERY_MINS = 5
-  private[this] val ttlPortals: JList[Portal] = Lists.newCopyOnWriteArrayList()
+  private[this] val ttlServices: JList[Service] = Lists.newCopyOnWriteArrayList()
   private[this] val watchers = CacheBuilder.newBuilder().build[String, Watcher]()
   private val ttlCheckService: AbstractScheduledService = new AbstractScheduledService {
     @volatile private lazy val executorService = executor()
 
     override def runOneIteration(): Unit = {
-      ttlPortals.asScala.foreach { portal ⇒
+      ttlServices.asScala.foreach { portal ⇒
         executorService.execute(new Runnable {
           override def run(): Unit = ConsulClient.agentClient.pass(portal.id, s"pass in ${System.currentTimeMillis()}")
         })
@@ -51,9 +50,9 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
     override def scheduler(): Scheduler = Scheduler.newFixedRateSchedule(0, 1, TimeUnit.SECONDS)
 
     override def shutDown(): Unit = {
-      if (!ttlPortals.isEmpty) {
-        val fixedThreadPool = Executors.newFixedThreadPool(ttlPortals.size())
-        ttlPortals.asScala.foreach { portal ⇒
+      if (!ttlServices.isEmpty) {
+        val fixedThreadPool = Executors.newFixedThreadPool(ttlServices.size())
+        ttlServices.asScala.foreach { portal ⇒
           fixedThreadPool.execute(new Runnable {
             override def run(): Unit = ConsulClient.agentClient.fail(portal.id, s"system shutdown in ${System.currentTimeMillis()}")
           })
@@ -73,49 +72,45 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
   })
 
   override def register(service: Service): Unit = {
-    service.portals.foreach { portal ⇒
-      val basicTags: Seq[String] = Seq(
-        s"""type = "microservice"""",
-        s"priority = ${service.priority}",
-        s"""group = "${service.group}"""",
-        s"""schema = "${portal.schema}"""",
-        s"""pattern = "${portal.pattern}"""")
-      @volatile lazy val nonCertifications = if (portal.nonCertifications.nonEmpty) {
-        Option(s"""non_certifications = "${portal.nonCertifications.mkString(",")}"""")
-      } else {
-        None
+    val basicTags: Seq[String] = Seq(
+      s"""type = "microservice"""",
+      s"priority = ${service.priority}",
+      s"""group = "${service.group}"""",
+      s"""schema = "${service.schema}"""",
+      s"""pattern = "${service.meta.pattern}"""")
+    @volatile lazy val nonCertifications = if (service.meta.nonCertifications.nonEmpty) {
+      Option(s"""non_certifications = "${service.meta.nonCertifications.mkString(",")}"""")
+    } else {
+      None
+    }
+    val optionalTags = Seq(
+      nonCertifications,
+      service.meta.loadBalancing.map(lb ⇒ s"""load_balancing = "$lb"""")).collect {
+        case Some(tag) ⇒ tag
       }
-      val optionalTags = Seq(
-        nonCertifications,
-        service.loadBalancing.map(lb ⇒ s"""load_balancing = "$lb"""")).collect {
-          case Some(tag) ⇒ tag
-        }
-      val tags = basicTags ++ optionalTags
-      val name = getServiceName(portal.schema, service.name)
-      val check = buildCheck(portal)
-      val registration = ImmutableRegistration.builder()
-        .id(portal.id)
-        .name(name)
-        .address(service.address)
-        .port(portal.port)
-        .enableTagOverride(true)
-        .addTags(tags: _*)
-        .check(check).build()
-      ConsulClient.agentClient.register(registration)
-      if (portal.check.isInstanceOf[TTLHealthCheck]) {
-        ttlPortals.add(portal)
-      }
+    val tags = basicTags ++ optionalTags
+    val name = getServiceName(service.schema, service.name)
+    val check = buildCheck(service.check)
+    val registration = ImmutableRegistration.builder()
+      .id(service.id)
+      .name(name)
+      .address(service.address)
+      .port(service.port)
+      .enableTagOverride(true)
+      .addTags(tags: _*)
+      .check(check).build()
+    ConsulClient.agentClient.register(registration)
+    if (service.check.isInstanceOf[TTLHealthCheck]) {
+      ttlServices.add(service)
     }
   }
 
   override def deregister(service: Service): Unit = {
-    service.portals.foreach { portal ⇒
-      ttlPortals.asScala.find(_.id == portal.id).foreach { s ⇒
-        ttlPortals.remove(s)
-        ConsulClient.agentClient.fail(portal.id)
-      }
-      ConsulClient.agentClient.deregister(portal.id)
+    ttlServices.asScala.find(_.id == service.id).foreach { s ⇒
+      ttlServices.remove(s)
+      ConsulClient.agentClient.fail(service.id)
     }
+    ConsulClient.agentClient.deregister(service.id)
   }
 
   override def subscribe(groups: Seq[String], schema: Schema, serviceName: String, listener: ServiceInstanceListener): Unit = {
@@ -134,9 +129,9 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
     filterInstances(groups, schema, response.getResponse)
   }
 
-  private[registry] def buildCheck(portal: Portal): RegCheck = {
+  private[registry] def buildCheck(check: HealthCheck): RegCheck = {
     val formatSeconds = (n: Duration) ⇒ s"${n.toSeconds}s"
-    val builder = portal.check match {
+    val builder = check match {
       case ttlCheck: TTLHealthCheck ⇒
         ImmutableRegCheck.builder().ttl(formatSeconds(ttlCheck.ttl))
       case httpCheck: HttpHealthCheck ⇒
@@ -148,7 +143,7 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
           .interval(formatSeconds(grpcCheck.interval))
       case c ⇒ throw new UnsupportedOperationException(s"Unsupported check: ${c.getClass.getName}")
     }
-    builder.deregisterCriticalServiceAfter(formatSeconds(portal.check.deregisterCriticalServiceAfter)).build()
+    builder.deregisterCriticalServiceAfter(formatSeconds(check.deregisterCriticalServiceAfter)).build()
   }
 
   private[this] def getServiceName(schema: Schema, name: String): String = {

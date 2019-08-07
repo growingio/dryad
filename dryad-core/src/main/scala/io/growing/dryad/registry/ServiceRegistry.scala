@@ -1,7 +1,7 @@
 package io.growing.dryad.registry
 
 import io.growing.dryad.listener.ServiceInstanceListener
-import io.growing.dryad.portal.Schema.Schema
+import io.growing.dryad.registry.dto.Schema.Schema
 import io.growing.dryad.registry.dto.{ Service, ServiceInstance }
 
 /**
