@@ -4,7 +4,7 @@ import com.typesafe.config.Config
 import io.growing.dryad.ServiceProvider
 import io.growing.dryad.listener.ServiceInstanceListener
 import io.growing.dryad.registry.dto.Schema.Schema
-import io.growing.dryad.registry.dto.{ Service, ServiceInstance }
+import io.growing.dryad.registry.dto.{ Service, Server }
 
 import scala.collection.JavaConverters._
 
@@ -26,9 +26,9 @@ class DirectServiceProvider(config: Config) extends ServiceProvider {
 
   override def subscribe(schema: Schema, serviceName: String, listener: ServiceInstanceListener): Unit = ???
 
-  override def getInstances(schema: Schema, serviceName: String, listener: Option[ServiceInstanceListener]): Seq[ServiceInstance] = {
+  override def getInstances(schema: Schema, serviceName: String, listener: Option[ServiceInstanceListener]): Seq[Server] = {
     config.getConfigList(s"cluster.providers.$serviceName").asScala.map { nodeConfig ⇒
-      ServiceInstance(serviceName, schema, nodeConfig.getString("address"), nodeConfig.getInt("port"))
+      Server(serviceName, schema, nodeConfig.getString("address"), nodeConfig.getInt("port"))
     }
   }
 

@@ -4,24 +4,26 @@ import sbt._
 object Dependencies {
 
   object Versions {
-    val config = "1.3.4"
-    val scala = "2.13.0"
-    val log4j2 = "2.12.0"
-    val ehcache = "3.7.1"
+    val scala = "2.13.1"
+    val config = "1.4.0"
+    val caffeine = "2.8.1"
+    val log4j2 = "2.13.0"
     val jersey = "2.22.2"
     val configs = "0.4.4"
-    val guava = "28.0-jre"
-    val scalatest = "3.0.8"
-    val scala211 = "2.11.12"
+    val ehcache = "3.8.1"
+    val guava = "28.2-jre"
+    val scalatest = "3.1.0"
+    val scala213 = "2.13.1"
     val scala212 = "2.12.8"
-    val scala213 = "2.13.0"
-    val scalaUtils = "1.0.8"
-    val cglibNodep = "3.2.12"
+    val scala211 = "2.11.12"
+    val cglibNodep = "3.3.0"
+    val scalaUtils = "1.0.13"
+    val consulClient = "1.4.1"
     val scalaLogging = "3.9.2"
-    val consulClient = "1.3.6"
-    val jacksonModuleScala = "2.9.9"
-    val undertowCore = "2.0.22.Final"
+    val scalaLibrary = "2.13.1"
+    val jacksonModuleScala = "2.10.2"
     val jgit = "5.4.0.201906121030-r"
+    val undertowCore = "2.0.29.Final"
   }
 
   object Compiles {
@@ -38,6 +40,7 @@ object Dependencies {
     val scalaUtils: ModuleID = "org.jmotor" %% "scala-utils" % Versions.scalaUtils
     val undertow: ModuleID = "io.undertow" % "undertow-core" % Versions.undertowCore
     val consul: ModuleID = "com.orbitz.consul" % "consul-client" % Versions.consulClient
+    val caffeine: ModuleID = "com.github.ben-manes.caffeine" % "caffeine" % Versions.caffeine
     val logging: ModuleID = "com.typesafe.scala-logging" %% "scala-logging" % Versions.scalaLogging
     val jackson: ModuleID = "com.fasterxml.jackson.module" %% "jackson-module-scala" % Versions.jacksonModuleScala
   }
@@ -50,11 +53,11 @@ object Dependencies {
 
   val l = libraryDependencies
 
-  val dryadCore = l ++= Seq(configs, cglib, logging, config, guava, Tests.scalaTest)
+  val dryadCore = l ++= Seq(configs, cglib, logging, config, guava, caffeine, Tests.scalaTest)
 
-  val dryadConsul = l ++= Seq(consul, Tests.scalaTest)
+  val dryadConsul = l ++= Seq(consul, jackson, Tests.scalaTest)
 
-  val dryadCluster = l ++= Seq(Tests.scalaTest)
+  val dryadCluster = l ++= Seq(Tests.scalaTest, Compiles.undertow % Test)
 
   val git2Consul = l ++= log4j2 ++ Seq(logging, jgit, ehcache, config, configs, guava,
     jackson, undertow, consul, scalaUtils, Tests.scalaTest)

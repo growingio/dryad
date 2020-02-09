@@ -19,7 +19,7 @@ import com.typesafe.scalalogging.LazyLogging
 import io.growing.dryad.consul.client.ConsulClient
 import io.growing.dryad.listener.ServiceInstanceListener
 import io.growing.dryad.registry.dto.Schema.Schema
-import io.growing.dryad.registry.dto.{ Schema, Service, ServiceInstance }
+import io.growing.dryad.registry.dto.{ Schema, Service, Server }
 import io.growing.dryad.registry.{ GrpcHealthCheck, HealthCheck, HttpHealthCheck, ServiceRegistry, TTLHealthCheck }
 
 import scala.collection.JavaConverters._
@@ -120,7 +120,7 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
     })
   }
 
-  override def getInstances(groups: Seq[String], schema: Schema, serviceName: String, listener: Option[ServiceInstanceListener]): Seq[ServiceInstance] = {
+  override def getInstances(groups: Seq[String], schema: Schema, serviceName: String, listener: Option[ServiceInstanceListener]): Seq[Server] = {
     val name = getServiceName(schema, serviceName)
     val response = ConsulClient.healthClient.getHealthyServiceInstances(name)
     listener.foreach(l ⇒ watchers.get(name, new Callable[Watcher] {
@@ -153,7 +153,7 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
     }
   }
 
-  private def filterInstances(groups: Seq[String], schema: Schema, instances: JList[ServiceHealth]): Seq[ServiceInstance] = {
+  private def filterInstances(groups: Seq[String], schema: Schema, instances: JList[ServiceHealth]): Seq[Server] = {
     instances.asScala.filter { health ⇒
       val service = health.getService
       @volatile lazy val matchedTag = groups.exists { group ⇒
@@ -166,7 +166,7 @@ class ConsulServiceRegistry extends ServiceRegistry with LazyLogging {
       matchedTag || matchedMeta
     }.map { health ⇒
       val service = health.getService
-      ServiceInstance(service.getService, schema, service.getAddress, service.getPort)
+      Server(service.getService, schema, service.getAddress, service.getPort)
     }
   }
 

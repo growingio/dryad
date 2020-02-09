@@ -2,7 +2,7 @@ package io.growing.dryad.registry
 
 import io.growing.dryad.listener.ServiceInstanceListener
 import io.growing.dryad.registry.dto.Schema.Schema
-import io.growing.dryad.registry.dto.{ Service, ServiceInstance }
+import io.growing.dryad.registry.dto.{ Service, Server }
 
 /**
  * Component:
@@ -19,6 +19,6 @@ trait ServiceRegistry {
 
   def subscribe(groups: Seq[String], schema: Schema, serviceName: String, listener: ServiceInstanceListener): Unit
 
-  def getInstances(groups: Seq[String], schema: Schema, serviceName: String, listener: Option[ServiceInstanceListener]): Seq[ServiceInstance]
+  def getInstances(groups: Seq[String], schema: Schema, serviceName: String, listener: Option[ServiceInstanceListener]): Seq[Server]
 
 }

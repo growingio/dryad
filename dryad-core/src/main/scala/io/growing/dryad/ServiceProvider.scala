@@ -1,7 +1,6 @@
 package io.growing.dryad
 
 import java.net.InetAddress
-import java.util
 import java.util.Map.Entry
 
 import com.google.common.base.Charsets
@@ -9,7 +8,7 @@ import com.google.common.hash.Hashing
 import com.typesafe.config.{ Config, ConfigFactory, ConfigValue }
 import io.growing.dryad.listener.ServiceInstanceListener
 import io.growing.dryad.registry.dto.Schema.Schema
-import io.growing.dryad.registry.dto.{ LoadBalancing, Schema, Service, ServiceInstance, ServiceMeta }
+import io.growing.dryad.registry.dto.{ LoadBalancing, Schema, Service, Server, ServiceMeta }
 import io.growing.dryad.registry.{ GrpcHealthCheck, HealthCheck, HttpHealthCheck, ServiceRegistry, TTLHealthCheck }
 import io.growing.dryad.utils.ConfigUtils._
 
@@ -35,7 +34,7 @@ trait ServiceProvider {
 
   def subscribe(schema: Schema, serviceName: String, listener: ServiceInstanceListener): Unit
 
-  def getInstances(schema: Schema, serviceName: String, listener: Option[ServiceInstanceListener]): Seq[ServiceInstance]
+  def getInstances(schema: Schema, serviceName: String, listener: Option[ServiceInstanceListener]): Seq[Server]
 
 }
 
@@ -53,7 +52,7 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
     val registryName = config.getString("dryad.registry")
     Class.forName(registryName).newInstance().asInstanceOf[ServiceRegistry]
   }
-  @volatile private[this] lazy val services = new util.ArrayList[Service]()
+  @volatile private[this] lazy val services = new java.util.ArrayList[Service]()
   @volatile private[this] lazy val deregisterCriticalServiceAfterFactor = 10
 
   override def register(): Unit = {
@@ -88,7 +87,7 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
     registry.subscribe(Seq("_global_", group), schema, serviceName, listener)
   }
 
-  override def getInstances(schema: Schema, serviceName: String, listener: Option[ServiceInstanceListener]): Seq[ServiceInstance] = {
+  override def getInstances(schema: Schema, serviceName: String, listener: Option[ServiceInstanceListener]): Seq[Server] = {
     val group = config.getString(groupConfigPath)
     registry.getInstances(Seq("_global_", group), schema, serviceName, listener)
   }

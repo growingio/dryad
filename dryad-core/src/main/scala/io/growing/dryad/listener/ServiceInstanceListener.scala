@@ -1,6 +1,6 @@
 package io.growing.dryad.listener
 
-import io.growing.dryad.registry.dto.ServiceInstance
+import io.growing.dryad.registry.dto.Server
 
 /**
  * Component:
@@ -11,6 +11,6 @@ import io.growing.dryad.registry.dto.ServiceInstance
  */
 trait ServiceInstanceListener {
 
-  def onChange(instances: Seq[ServiceInstance]): Unit
+  def onChange(instances: Seq[Server]): Unit
 
 }

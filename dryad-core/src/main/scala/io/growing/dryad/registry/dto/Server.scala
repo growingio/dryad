@@ -9,4 +9,4 @@ import Schema.Schema
  *
  * @author AI
  */
-final case class ServiceInstance(name: String, schema: Schema, address: String, port: Int)
+final case class Server(name: String, schema: Schema, address: String, port: Int)
