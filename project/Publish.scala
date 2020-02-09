@@ -6,7 +6,7 @@ object Publish extends AutoPlugin {
   override def trigger: PluginTrigger = allRequirements
 
   override def projectSettings: Seq[_root_.sbt.Def.Setting[_]] = Seq(
-    credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
+    credentials += Credentials(Path.userHome / ".sbt" / ".credentials"),
     publishMavenStyle := true,
     publishTo := {
       val nexus = "https://oss.sonatype.org/"
