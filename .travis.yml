@@ -13,7 +13,7 @@ jdk:
 
 script:
   - sbt clean coverage test coverageReport
-  - sbt ";++ 2.11.11 test"
+  - sbt ";++ 2.11.12 test"
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
