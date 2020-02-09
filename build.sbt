@@ -1,5 +1,6 @@
 import Dependencies.Versions
 import xerial.sbt.pack.PackPlugin.autoImport.packExtraClasspath
+import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
 
 lazy val root = Project(id = "dryad", base = file("."))
   .settings(
@@ -40,3 +41,21 @@ def dryadModule(name: String): Project = Project(id = name, base = file(name))
       "log4j.*" -> "log4j2",
       "scala-library" -> "scala")
   )
+
+releasePublishArtifactsAction := PgpKeys.publishSigned.value
+
+releaseCrossBuild := true
+
+releaseProcess := Seq[ReleaseStep](
+  checkSnapshotDependencies,
+  inquireVersions,
+  runClean,
+  runTest,
+  setReleaseVersion,
+  commitReleaseVersion,
+  tagRelease,
+  publishArtifacts,
+  setNextVersion,
+  commitNextVersion,
+  pushChanges
+)
