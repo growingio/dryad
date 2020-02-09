@@ -14,6 +14,9 @@ import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import org.scalatest.funsuite.AnyFunSuite
 
+import scala.util.Success
+import scala.util.Try
+
 /**
  *
  * Date: 2019-01-08
@@ -61,8 +64,10 @@ class ClusterSpec extends AnyFunSuite {
 
   test("target is available") {
     val cluster = Cluster.direct(ConfigFactory.load()).asInstanceOf[ClusterImpl]
-    assert(cluster.isAvailable(Server("GrowingIO", Schema.HTTP, "www.growingio.com", 80)))
-    assert(!cluster.isAvailable(Server("GrowingIO", Schema.HTTP, "www.growingio.com", 81)))
+    val undertow = startUndertow
+    assert(cluster.isAvailable(Server("GrowingIO", Schema.HTTP, "0.0.0.0", 8080)))
+    assert(!cluster.isAvailable(Server("GrowingIO", Schema.HTTP, "0.0.0.0", 8081)))
+    undertow.stop()
   }
 
   test("make server down") {
@@ -76,6 +81,21 @@ class ClusterSpec extends AnyFunSuite {
   }
 
   test("check timer") {
+    val undertow = startUndertow
+    val cluster = new ClusterImpl(new DirectServiceProvider(ConfigFactory.load()), 1)
+    cluster.roundRobin(Schema.GRPC, "grpc")
+    cluster.makeServerDown(Server("grpc", Schema.GRPC, "0.0.0.0", 8080))
+    Thread.sleep(2000)
+    val servers = (1 to 5).map { _ ⇒
+      Try(cluster.roundRobin(Schema.GRPC, "grpc"))
+    }.collect {
+      case Success(value) ⇒ value
+    }
+    assert(servers.exists(s ⇒ s.address == "0.0.0.0" && s.port == 8080))
+    undertow.stop()
+  }
+
+  private def startUndertow: Undertow = {
     val undertow = Undertow.builder().addHttpListener(8080, "0.0.0.0").setHandler(new HttpHandler {
       override def handleRequest(exchange: HttpServerExchange): Unit = {
         exchange.getResponseSender.send("imok")
@@ -83,15 +103,7 @@ class ClusterSpec extends AnyFunSuite {
       }
     }).build()
     undertow.start()
-    val cluster = new ClusterImpl(new DirectServiceProvider(ConfigFactory.load()), 1)
-    cluster.makeServerDown(Server("grpc", Schema.GRPC, "0.0.0.0", 8080))
-    cluster.roundRobin(Schema.GRPC, "grpc")
-    Thread.sleep(2000)
-    val servers = (1 to 5).map { _ ⇒
-      cluster.roundRobin(Schema.GRPC, "grpc")
-    }
-    assert(servers.exists(s ⇒ s.address == "0.0.0.0" && s.port == 8080))
-    undertow.stop()
+    undertow
   }
 
 }
