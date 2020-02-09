@@ -9,7 +9,7 @@ scala:
   - 2.12.8
 
 jdk:
-  - oraclejdk8
+  - openjdk10
 
 script:
   - sbt clean coverage test coverageReport
