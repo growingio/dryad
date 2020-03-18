@@ -22,7 +22,7 @@ class DirectServiceProvider(config: Config) extends ServiceProvider {
 
   override def getServices: Set[Service] = ???
 
-  override def addPatterns(schema: Schema, patterns: String*): Unit = ???
+  override def setPatterns(schema: Schema, patterns: String*): Unit = ???
 
   override def subscribe(schema: Schema, serviceName: String, listener: ServiceInstanceListener): Unit = ???
 

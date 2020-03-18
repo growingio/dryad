@@ -30,7 +30,7 @@ trait ServiceProvider {
 
   def getServices: Set[Service]
 
-  def addPatterns(schema: Schema, patterns: String*): Unit
+  def setPatterns(schema: Schema, patterns: String*): Unit
 
   def subscribe(schema: Schema, serviceName: String, listener: ServiceInstanceListener): Unit
 
@@ -52,11 +52,10 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
     val registryName = config.getString("dryad.registry")
     Class.forName(registryName).newInstance().asInstanceOf[ServiceRegistry]
   }
-  @volatile private[this] lazy val services = new java.util.ArrayList[Service]()
+  @volatile private[this] lazy val services = new java.util.ArrayList[Service](parseServices().asJava)
   @volatile private[this] lazy val deregisterCriticalServiceAfterFactor = 10
 
   override def register(): Unit = {
-    initService()
     services.asScala.foreach(registry.register)
   }
 
@@ -65,11 +64,10 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
   }
 
   override def getServices: Set[Service] = {
-    initService()
     services.asScala.toSet
   }
 
-  override def addPatterns(schema: Schema, patterns: String*): Unit = {
+  override def setPatterns(schema: Schema, patterns: String*): Unit = {
     if (patterns.nonEmpty) {
       this.synchronized {
         val newServices = services.asScala.map {
@@ -90,16 +88,6 @@ class ServiceProviderImpl(config: Config) extends ServiceProvider {
   override def getInstances(schema: Schema, serviceName: String, listener: Option[ServiceInstanceListener]): Seq[Server] = {
     val group = config.getString(groupConfigPath)
     registry.getInstances(Seq("_global_", group), schema, serviceName, listener)
-  }
-
-  private[dryad] def initService(): Unit = {
-    if (services.isEmpty) {
-      this.synchronized {
-        if (services.isEmpty) {
-          parseServices().foreach(services.add)
-        }
-      }
-    }
   }
 
   private[dryad] def parseServices(): Set[Service] = {

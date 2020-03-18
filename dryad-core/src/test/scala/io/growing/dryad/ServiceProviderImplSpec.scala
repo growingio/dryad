@@ -1,9 +1,10 @@
 package io.growing.dryad
 
 import com.typesafe.config.ConfigFactory
+import io.growing.dryad.registry.GrpcHealthCheck
+import io.growing.dryad.registry.HttpHealthCheck
 import io.growing.dryad.registry.dto.Schema
-import io.growing.dryad.registry.{ GrpcHealthCheck, HttpHealthCheck }
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 /**
  * Component:
@@ -12,7 +13,7 @@ import org.scalatest.FunSuite
  *
  * @author AI
  */
-class ServiceProviderImplSpec extends FunSuite {
+class ServiceProviderImplSpec extends AnyFunSuite {
 
   test("Parse service") {
     val provider = new ServiceProviderImpl(ConfigFactory.load("services.conf"))
@@ -27,6 +28,15 @@ class ServiceProviderImplSpec extends FunSuite {
     assert(grpcPortalOpt.get.check.isInstanceOf[GrpcHealthCheck])
     assert(grpcPortalOpt.get.meta.nonCertifications.contains("/rpc.internal.*"))
     assert(grpcPortalOpt.get.port == 9083)
+  }
+
+  test("Set patterns") {
+    val provider = new ServiceProviderImpl(ConfigFactory.load("services.conf"))
+    provider.setPatterns(Schema.HTTP, "/projects/*")
+    val services = provider.getServices
+    val httpServiceOpt = services.find(_.schema == Schema.HTTP)
+    assert(httpServiceOpt.isDefined)
+    assert(httpServiceOpt.get.meta.pattern == "/projects/*")
   }
 
   test("parse default http check") {
