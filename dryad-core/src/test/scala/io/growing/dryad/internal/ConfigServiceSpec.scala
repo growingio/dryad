@@ -5,7 +5,7 @@ import java.nio.file.Files
 import io.growing.dryad.internal.impl.ConfigServiceImpl
 import io.growing.dryad.provider.ConfigProvider
 import io.growing.dryad.watcher.ConfigChangeListener
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 /**
  * Component:
@@ -14,7 +14,7 @@ import org.scalatest.FunSuite
  *
  * @author AI
  */
-class ConfigServiceSpec extends FunSuite {
+class ConfigServiceSpec extends AnyFunSuite {
 
   test("download") {
     val configService = new ConfigServiceImpl(new ConfigProvider {

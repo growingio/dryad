@@ -2,6 +2,9 @@ import Dependencies.Versions
 import xerial.sbt.pack.PackPlugin.autoImport.packExtraClasspath
 import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
 
+lazy val utf8: String = "UTF-8"
+lazy val javaVersion: String = "1.8"
+
 lazy val root = Project(id = "dryad", base = file("."))
   .settings(
     organization := "io.growing",
@@ -39,7 +42,8 @@ def dryadModule(name: String): Project = Project(id = name, base = file(name))
     scalaVersion := Versions.scala212,
     dependencyUpgradeModuleNames := Map(
       "log4j.*" -> "log4j2",
-      "scala-library" -> "scala")
+      "scala-library" -> "scala"),
+    Compile / compile / javacOptions ++= Seq("-source", javaVersion, "-target", javaVersion, "-encoding", utf8, "-deprecation")
   )
 
 releasePublishArtifactsAction := PgpKeys.publishSigned.value

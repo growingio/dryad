@@ -2,8 +2,9 @@ package io.growing.dryad.consul
 
 import io.growing.dryad.ServiceProvider
 import org.scalatest._
+import org.scalatest.funsuite.AnyFunSuite
 
-class ServiceTest extends FunSuite {
+class ServiceTest extends AnyFunSuite {
 
   private val provider = ServiceProvider()
 

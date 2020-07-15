@@ -4,9 +4,9 @@ import java.util.UUID
 
 import io.growing.dryad.ConfigSystem
 import io.growing.dryad.consul.client.ConsulClient
-import org.scalatest._
+import org.scalatest.funsuite.AnyFunSuite
 
-class ConfigTest extends FunSuite {
+class ConfigTest extends AnyFunSuite {
 
   test("Consul client") {
     val configSystem = ConfigSystem()

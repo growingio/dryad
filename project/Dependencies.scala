@@ -4,29 +4,31 @@ import sbt._
 object Dependencies {
 
   object Versions {
-    val scala = "2.13.1"
+    val scala = "2.13.3"
     val config = "1.4.0"
-    val caffeine = "2.8.1"
-    val log4j2 = "2.13.0"
+    val log4j2 = "2.13.3"
     val jersey = "2.22.2"
     val configs = "0.4.4"
     val ehcache = "3.8.1"
-    val guava = "28.2-jre"
-    val scalatest = "3.1.0"
+    val caffeine = "2.8.5"
+    val guava = "29.0-jre"
     val scala213 = "2.13.1"
-    val scala212 = "2.12.8"
+    val scalatest = "3.2.0"
+    val scala212 = "2.12.12"
     val scala211 = "2.11.12"
     val cglibNodep = "3.3.0"
-    val scalaUtils = "1.0.13"
-    val consulClient = "1.4.1"
+    val scalaUtils = "1.0.20"
     val scalaLogging = "3.9.2"
-    val scalaLibrary = "2.13.1"
-    val jacksonModuleScala = "2.10.2"
+    val consulClient = "1.4.2"
+    val scalaLibrary = "2.13.3"
+    val undertowCore = "2.1.3.Final"
+    val jacksonModuleScala = "2.11.1"
     val jgit = "5.4.0.201906121030-r"
-    val undertowCore = "2.0.29.Final"
+    val lombok = "1.18.12"
   }
 
   object Compiles {
+    val lombok = "org.projectlombok" % "lombok" % Versions.lombok
     val config: ModuleID = "com.typesafe" % "config" % Versions.config
     val cglib: ModuleID = "cglib" % "cglib-nodep" % Versions.cglibNodep
     val guava: ModuleID = "com.google.guava" % "guava" % Versions.guava
@@ -53,7 +55,7 @@ object Dependencies {
 
   val l = libraryDependencies
 
-  val dryadCore = l ++= Seq(configs, cglib, logging, config, guava, caffeine, Tests.scalaTest)
+  val dryadCore = l ++= Seq(cglib, logging, config, guava, lombok, caffeine, Tests.scalaTest)
 
   val dryadConsul = l ++= Seq(consul, jackson, Tests.scalaTest)
 

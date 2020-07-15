@@ -4,7 +4,7 @@ import com.typesafe.config.ConfigFactory
 import io.growing.dryad.git2consul.config.Git2ConsulConfig
 import io.growing.dryad.git2consul.sync.impl.GitConfigurationSyncer
 import io.growing.dryad.git2consul.writer.impl.ConsulConfigurationWriter
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 /**
  * Component:
@@ -13,7 +13,7 @@ import org.scalatest.FunSuite
  *
  * @author AI
  */
-class GitConfigurationSyncerSpec extends FunSuite {
+class GitConfigurationSyncerSpec extends AnyFunSuite {
 
   test("sync") {
     val config = Git2ConsulConfig.parse(ConfigFactory.load())

@@ -3,7 +3,7 @@ package io.growing.dryad.git2consul.utils
 import java.nio.file.Files
 
 import org.eclipse.jgit.api.Git
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 /**
  * Component:
@@ -12,7 +12,7 @@ import org.scalatest.FunSuite
  *
  * @author AI
  */
-class ConfigurationsSpec extends FunSuite {
+class ConfigurationsSpec extends AnyFunSuite {
 
   test("get configurations") {
     val root = Files.createTempDirectory("git2consul-test")

@@ -3,7 +3,7 @@ package io.growing.dryad.consul.registry
 import com.typesafe.config.ConfigFactory
 import io.growing.dryad.ServiceProviderImpl
 import io.growing.dryad.registry.dto.Schema
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 /**
  * Component:
@@ -12,7 +12,7 @@ import org.scalatest.FunSuite
  *
  * @author AI
  */
-class ConsulServiceRegistrySpec extends FunSuite {
+class ConsulServiceRegistrySpec extends AnyFunSuite {
 
   test("get instances") {
     val provider = new ServiceProviderImpl(ConfigFactory.load())

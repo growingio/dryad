@@ -4,12 +4,12 @@ import java.lang.reflect.Method
 import java.util.concurrent.atomic.AtomicReference
 
 import com.typesafe.config.{ Config, ConfigFactory }
-import configs.Configs
 import io.growing.dryad.parser.ConfigParser
 import net.sf.cglib.proxy.{ Enhancer, MethodInterceptor, MethodProxy }
 import org.scalatest._
+import org.scalatest.funsuite.AnyFunSuite
 
-class AppTest extends FunSuite {
+class AppTest extends AnyFunSuite {
   test("Default") {
     val dryadConfig = ConfigFactory.parseString(
       """
@@ -63,7 +63,9 @@ class AppTest extends FunSuite {
 }
 
 class DefConfigParser extends ConfigParser[DevConfig] {
-  override def parse(config: Config): DevConfig = Configs[DevConfig].extract(config).value
+  override def parse(config: Config): DevConfig = {
+    DevConfig(config.getInt("age"), config.getString("name"), Addr(config.getString("addr.city")))
+  }
 }
 
 final case class Addr(city: String)
